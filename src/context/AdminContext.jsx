@@ -64,6 +64,14 @@ const defaultData = {
     { id: 4, name: 'Vikram Nair', role: 'SOI Intern — Software Engineering Track', college: 'PESIT, Bangalore', avatar: 'VN', color: 'from-indigo-600 to-blue-800', rating: 5, text: 'The SOI program is structured around real industry systems. Within weeks, I understood how enterprise software actually gets built and deployed. The INERA team mentored us like colleagues, not students. I walked away with a certificate and a genuine edge over my batchmates.', active: true },
   ],
   galleryCategories: ['Company Activities', 'Technology Events', 'Workshops', 'Team Collaborations', 'Office Environment'],
+  stats: [
+    { id: 1, value: '50+', label: 'Projects Delivered', active: true },
+    { id: 2, value: '12+', label: 'Enterprise Solutions', active: true },
+    { id: 3, value: '8+', label: 'Tech Domains', active: true },
+    { id: 4, value: '200+', label: 'SOI Students', active: true },
+    { id: 5, value: '99%', label: 'Client Satisfaction', active: true },
+  ],
+  certificates: [],
   isAdminLoggedIn: false,
 };
 
@@ -222,8 +230,16 @@ const deleteGalleryItemFromSupabase = async (id) => {
 // ── Provider ──────────────────────────────────────────────────────────────────
 export function AdminProvider({ children }) {
   const [data, setData] = useState(() => safeLoadMainData() ?? defaultData);
-  const [galleryItems, setGalleryItems] = useState(() => loadGalleryFromStorage());
+  const [galleryItems, setGalleryItems] = useState([]); // lazy-loaded on demand
+  const [galleryLoaded, setGalleryLoaded] = useState(false);
   const [supabaseLoaded, setSupabaseLoaded] = useState(false);
+
+  const loadGallery = useCallback(() => {
+    if (galleryLoaded) return;
+    const items = loadGalleryFromStorage();
+    setGalleryItems(items);
+    setGalleryLoaded(true);
+  }, [galleryLoaded]);
 
   // Load from Supabase on mount (non-blocking — shows localStorage data instantly)
   useEffect(() => {
@@ -238,6 +254,7 @@ export function AdminProvider({ children }) {
       }
       if (sbGallery !== null) {
         setGalleryItems(sbGallery);
+        setGalleryLoaded(true);
       }
       setSupabaseLoaded(true);
     })();
@@ -303,7 +320,7 @@ export function AdminProvider({ children }) {
   };
 
   const login = (password) => {
-    if (password === 'Mahaveer') {
+    if (password === 'Mahaveernirmalachandan') {
       setData(prev => ({ ...prev, isAdminLoggedIn: true }));
       return true;
     }
@@ -324,6 +341,7 @@ export function AdminProvider({ children }) {
       deleteGalleryItem,
       login,
       logout,
+      loadGallery,
       isSupabaseConnected: isSupabaseReady(),
     }}>
       {children}

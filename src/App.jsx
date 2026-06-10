@@ -11,6 +11,8 @@ import SOIPage from './pages/SOIPage';
 import CareersPage from './pages/CareersPage';
 import GalleryPage from './pages/GalleryPage';
 import ContactPage from './pages/ContactPage';
+import VerifyCertificatePage from './pages/VerifyCertificatePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import AdminPage from './pages/AdminPage';
 
 function ScrollToTop() {
@@ -24,9 +26,10 @@ function ScrollToTop() {
 function Layout({ children }) {
   const { pathname } = useLocation();
   const isAdmin = pathname === '/admin';
+  const isVerifyCert = pathname === '/verify-certificate';
   return (
     <>
-      {!isAdmin && <Header />}
+      {!isAdmin && !isVerifyCert && <Header />}
       <main>{children}</main>
       {!isAdmin && <Footer />}
       {!isAdmin && <WhatsAppButton />}
@@ -48,6 +51,8 @@ export default function App() {
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/gallery" element={<GalleryPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/verify-certificate" element={<VerifyCertificatePage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </Layout>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import CorePillars from '../components/CorePillars';
@@ -9,14 +9,6 @@ import {
   CheckCircle2, Zap, Shield, TrendingUp, ChevronRight, Award,
   Building2, Cpu, Database, Layers, ImageIcon
 } from 'lucide-react';
-
-const stats = [
-  { value: '50+', label: 'Projects Delivered' },
-  { value: '12+', label: 'Enterprise Solutions' },
-  { value: '8+', label: 'Tech Domains' },
-  { value: '200+', label: 'SOI Students' },
-  { value: '99%', label: 'Client Satisfaction' },
-];
 
 const services = [
   { icon: Brain, title: 'AI Development & Automation', desc: 'Intelligent AI systems, workflow automation, and AI-powered business solutions.', color: 'from-blue-500/20 to-cyan-500/20', border: 'border-blue-500/20' },
@@ -43,7 +35,8 @@ const PLACEHOLDER_COLORS = [
 ];
 
 function GalleryMarquee() {
-  const { data } = useAdmin();
+  const { data, loadGallery } = useAdmin();
+  useEffect(() => { loadGallery(); }, [loadGallery]);
 
   const photos = (data.galleryItems || []).filter(i => i.active !== false);
 
@@ -209,7 +202,7 @@ export default function HomePage() {
 
           {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-4xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            {stats.map((s, i) => (
+            {((data.stats || []).filter(s => s.active !== false)).map((s, i) => (
               <div key={i} className="glass rounded-xl py-4 px-3 text-center card-hover">
                 <div className="font-sora font-bold text-2xl text-gradient">{s.value}</div>
                 <div className="text-white/50 text-xs mt-1">{s.label}</div>

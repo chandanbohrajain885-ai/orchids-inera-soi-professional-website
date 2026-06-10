@@ -84,7 +84,29 @@ CREATE POLICY "anon_write_gallery_categories"
   ON gallery_categories FOR ALL USING (true) WITH CHECK (true);
 
 
--- ── 4. Supabase Storage bucket for gallery images ─────────
+-- ── 4. Certificates table (for future dedicated storage) ──
+-- Note: Certificates are currently stored inside site_config JSONB.
+-- This table is ready for when you want to migrate to dedicated storage.
+CREATE TABLE IF NOT EXISTS certificates (
+  id                 TEXT PRIMARY KEY,
+  candidate_name     TEXT NOT NULL DEFAULT '',
+  certificate_number TEXT NOT NULL DEFAULT '',
+  specialization     TEXT NOT NULL DEFAULT '',
+  date_of_issue      TEXT NOT NULL DEFAULT '',
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (certificate_number)
+);
+
+ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public_read_certificates"
+  ON certificates FOR SELECT USING (true);
+
+CREATE POLICY "anon_write_certificates"
+  ON certificates FOR ALL USING (true) WITH CHECK (true);
+
+
+-- ── 5. Supabase Storage bucket for gallery images ─────────
 -- Run this AFTER creating the schema:
 --   Dashboard → Storage → New bucket
 --   Name: gallery-images

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ZoomIn, ImageIcon } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 
@@ -13,9 +13,11 @@ const placeholderItems = [
 ];
 
 export default function GalleryPage() {
-  const { data } = useAdmin();
+  const { data, loadGallery } = useAdmin();
   const [activeCategory, setActiveCategory] = useState('All');
   const [lightbox, setLightbox] = useState(null);
+
+  useEffect(() => { loadGallery(); }, [loadGallery]);
 
   const categories = ['All', ...(data.galleryCategories || [])];
   const galleryItems = (data.galleryItems || []).filter(i => i.active !== false);

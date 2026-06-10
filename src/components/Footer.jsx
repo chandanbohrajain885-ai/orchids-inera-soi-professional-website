@@ -51,8 +51,8 @@ export default function Footer() {
               {[
                 { label: 'About Us', path: '/about' },
                 { label: 'Services', path: '/services' },
-                { label: 'SOI', path: '/soi' },
-                { label: 'Careers', path: '/careers' },
+                { label: 'Privacy Policy', path: '/privacy-policy' },
+                { label: 'Verify Certificate', path: '/verify-certificate' },
                 { label: 'Contact', path: '/contact' },
               ].map(item => (
                 <li key={item.path}>

@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Megaphone, Star, Briefcase, Link2, Users,
   Phone, Lock, LogOut, Eye, EyeOff, Save, Plus, Trash2, Check,
-  X, ChevronRight, ArrowLeft, Globe, GraduationCap, MessageSquare, Image
+  X, ChevronRight, ArrowLeft, Globe, GraduationCap, MessageSquare, Image, Shield, Award, BarChart3, Search, Upload
 } from 'lucide-react';
 
 const tabs = [
@@ -13,12 +13,14 @@ const tabs = [
   { id: 'contact',     label: 'Contact Info',      icon: Phone },
   { id: 'announcements', label: 'Announcements',   icon: Megaphone },
   { id: 'highlights',  label: 'Highlights',        icon: Star },
+  { id: 'stats',       label: 'Stats',             icon: BarChart3 },
   { id: 'careers',     label: 'Careers',           icon: Briefcase },
   { id: 'soi',         label: 'SOI Settings',      icon: GraduationCap },
   { id: 'pillars',     label: 'Core Pillars',      icon: Users },
   { id: 'gallery',     label: 'Gallery',           icon: Image },
   { id: 'clientreviews', label: 'Client Reviews',  icon: MessageSquare },
   { id: 'studentreviews', label: 'Student Reviews', icon: MessageSquare },
+  { id: 'certificates',  label: 'Certificates',     icon: Shield },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -114,10 +116,15 @@ function LoginScreen({ onLogin }) {
 }
 
 // ─── Dashboard (all hooks here — no conditional returns above hooks) ──────────
-function AdminDashboard({ data, updateData, updateGallery, persistGallery, deleteGalleryItem, logout, isSupabaseConnected }) {
+function AdminDashboard({ data, updateData, updateGallery, persistGallery, deleteGalleryItem, logout, isSupabaseConnected, loadGallery }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [saved, setSaved] = useState({});
+
+  // Load gallery data when the gallery tab is active
+  useEffect(() => {
+    if (activeTab === 'gallery' && loadGallery) loadGallery();
+  }, [activeTab, loadGallery]);
 
   // All local state declared unconditionally
   const [socialState,   setSocialState]   = useState(() => ({ ...data.socialLinks }));
@@ -132,6 +139,11 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
   const [galleryItems,  setGalleryItems]  = useState(() => JSON.parse(JSON.stringify(data.galleryItems || [])));
   const [galleryCats,   setGalleryCats]   = useState(() => [...(data.galleryCategories || [])]);
   const [newCatInput,   setNewCatInput]   = useState('');
+  const [statsState,    setStatsState]    = useState(() => JSON.parse(JSON.stringify(data.stats || [])));
+  const [certsState,    setCertsState]    = useState(() => JSON.parse(JSON.stringify(data.certificates || [])));
+const [certSearch,    setCertSearch]    = useState('');
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkText,      setBulkText]      = useState('');
 
   const flag = (key) => {
     setSaved(p => ({ ...p, [key]: true }));
@@ -157,6 +169,13 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
   const toggleHighlight = (id) => setHighState(p => p.map(h => h.id === id ? { ...h, active: !h.active } : h));
   const updateHighlight = (id, field, val) => setHighState(p => p.map(h => h.id === id ? { ...h, [field]: val } : h));
   const saveHighlights = () => { updateData('highlights', highState); flag('highlights'); };
+
+  // ── Stats ───────────────────────────────────────────────────────────────────
+  const addStat = () => setStatsState(p => [...p, { id: Date.now(), value: '', label: '', active: true }]);
+  const removeStat = (id) => setStatsState(p => p.filter(s => s.id !== id));
+  const toggleStat = (id) => setStatsState(p => p.map(s => s.id === id ? { ...s, active: !s.active } : s));
+  const updateStat = (id, field, val) => setStatsState(p => p.map(s => s.id === id ? { ...s, [field]: val } : s));
+  const saveStats = () => { updateData('stats', statsState); flag('stats'); };
 
   // ── Careers ─────────────────────────────────────────────────────────────────
   const addJob = () => setCareersState(p => [...p, { id: Date.now(), title: '', department: '', type: 'Full-time', location: '', description: '', active: true }]);
@@ -252,6 +271,77 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
   const toggleStudentReview = (id) => setStudentRev(p => p.map(r => r.id === id ? { ...r, active: !r.active } : r));
   const updateStudentReview = (id, field, val) => setStudentRev(p => p.map(r => r.id === id ? { ...r, [field]: val, ...(field === 'name' ? { avatar: makeAvatar(val) } : {}) } : r));
   const saveStudentReviews = () => { updateData('studentReviews', studentRev); flag('studentreviews'); };
+
+  // ── Certificates CRUD ────────────────────────────────────────────────────────
+  const certDuplicateErr = (id, certNo) => {
+    if (!certNo?.trim()) return false;
+    return certsState.some(c => c.certificateNumber?.toLowerCase() === certNo.trim().toLowerCase() && c.id !== id);
+  };
+  const addCert = () => setCertsState(p => [...p, { id: Date.now(), candidateName: '', certificateNumber: '', specialization: '', dateOfIssue: '' }]);
+  const removeCert = (id) => setCertsState(p => p.filter(c => c.id !== id));
+  const updateCert = (id, field, val) => setCertsState(p => p.map(c => c.id === id ? { ...c, [field]: val } : c));
+  const saveCerts = () => {
+    // Validate unique certificate numbers
+    const numbers = certsState.map(c => c.certificateNumber?.trim().toLowerCase()).filter(Boolean);
+    const dupes = numbers.filter((n, i) => numbers.indexOf(n) !== i);
+    if (dupes.length > 0) {
+      alert(`Duplicate certificate numbers found: "${dupes[0]}". Each certificate number must be unique.`);
+      return;
+    }
+    updateData('certificates', certsState);
+    flag('certificates');
+  };
+  const searchCerts = (term) => {
+    if (!term?.trim()) return certsState;
+    return certsState.filter(c =>
+      c.candidateName?.toLowerCase().includes(term.toLowerCase()) ||
+      c.certificateNumber?.toLowerCase().includes(term.toLowerCase()) ||
+      c.specialization?.toLowerCase().includes(term.toLowerCase())
+    );
+  };
+
+  // ── Bulk Import Certificates ───────────────────────────────────────────────
+  const parseBulkData = (text) => {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return [];
+    const rows = lines.map(l => l.split('\t').map(c => c.trim()));
+    // Detect and skip header row if it looks like one
+    const first = rows[0];
+    const isHeader = first.some(w => /^(candidate|certificate|specialization|date|name|number|issue)/i.test(w));
+    const dataRows = isHeader ? rows.slice(1) : rows;
+    return dataRows.map(row => ({
+      id: Date.now() + Math.random(),
+      candidateName: row[0] || '',
+      certificateNumber: row[1] || '',
+      specialization: row[2] || '',
+      dateOfIssue: row[3] || '',
+    })).filter(c => c.candidateName || c.certificateNumber);
+  };
+
+  const handleBulkImport = () => {
+    const parsed = parseBulkData(bulkText);
+    if (parsed.length === 0) {
+      alert('No valid data found. Make sure you pasted tab-separated rows (copy from Excel).');
+      return;
+    }
+    // Check for duplicate certificate numbers within the import batch
+    const importNums = parsed.map(c => c.certificateNumber?.trim().toLowerCase()).filter(Boolean);
+    const batchDupes = importNums.filter((n, i) => importNums.indexOf(n) !== i);
+    if (batchDupes.length > 0) {
+      alert(`Duplicate certificate numbers found in import: "${batchDupes[0]}". Fix and try again.`);
+      return;
+    }
+    // Check against existing certs
+    const existingNums = certsState.map(c => c.certificateNumber?.trim().toLowerCase()).filter(Boolean);
+    const existingDupes = importNums.filter(n => existingNums.includes(n));
+    if (existingDupes.length > 0) {
+      alert(`Certificate number "${existingDupes[0]}" already exists. Remove duplicates before importing.`);
+      return;
+    }
+    setCertsState(prev => [...prev, ...parsed]);
+    setBulkText('');
+    setShowBulkImport(false);
+  };
 
   // ── Render ──────────────────────────────────────────────────────────────────
   const renderContent = () => {
@@ -382,6 +472,36 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
           </Section>
         );
 
+      case 'stats': {
+        return (
+          <Section title="Homepage Stats" sub="Manage the stat cards shown on the homepage. Toggle visibility, edit values and labels.">
+            <div className="space-y-4 mb-4">
+              {statsState.map(s => (
+                <div key={s.id} className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => toggleStat(s.id)} className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${s.active ? 'bg-green-600/30 text-green-400' : 'bg-white/8 text-white/40'}`}>
+                      {s.active ? '● Active' : '○ Hidden'}
+                    </button>
+                    <button onClick={() => removeStat(s.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center"><Trash2 size={13} /></button>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div><label className={lCls}>Value</label><input className={iCls} value={s.value} onChange={e => updateStat(s.id, 'value', e.target.value)} placeholder="e.g. 50+" /></div>
+                    <div><label className={lCls}>Label</label><input className={iCls} value={s.label} onChange={e => updateStat(s.id, 'label', e.target.value)} placeholder="e.g. Projects Delivered" /></div>
+                  </div>
+                </div>
+              ))}
+              {statsState.length === 0 && (
+                <div className="text-center py-10 text-white/30 text-sm border border-dashed border-white/10 rounded-xl">No stats yet. Click "Add Stat" to create one.</div>
+              )}
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={addStat} className="btn-secondary text-sm flex items-center gap-2"><Plus size={14} /> Add Stat</button>
+              <SaveBtn onClick={saveStats} saved={saved.stats} />
+            </div>
+          </Section>
+        );
+      }
+
       case 'careers':
         return (
           <Section title="Job Openings" sub="Manage positions shown on the Careers page.">
@@ -440,53 +560,52 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
         );
 
       case 'pillars': {
-        const PillarRow = ({ p }) => (
-          <div className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-electric-blue/20 flex items-center justify-center text-xs font-bold text-electric-blue flex-shrink-0">
-                  {p.name ? p.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}
-                </div>
-                <span className="text-white/60 text-sm font-medium truncate">{p.name || 'New Member'}</span>
-              </div>
-              <button onClick={() => removePillar(p.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center flex-shrink-0">
-                <Trash2 size={13} />
-              </button>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div><label className={lCls}>Full Name</label><input className={iCls} value={p.name} onChange={e => updatePillar(p.id, 'name', e.target.value)} placeholder="e.g. Chandan Bohra Jain" /></div>
-              <div><label className={lCls}>Designation / Role</label><input className={iCls} value={p.designation} onChange={e => updatePillar(p.id, 'designation', e.target.value)} placeholder="e.g. Founder & CEO" /></div>
-              <div><label className={lCls}>Contact Email</label><input className={iCls} value={p.contactEmail} onChange={e => updatePillar(p.id, 'contactEmail', e.target.value)} placeholder="name@gmail.com (leave blank to hide)" /></div>
-              <div><label className={lCls}>LinkedIn URL</label><input className={iCls} value={p.linkedin} onChange={e => updatePillar(p.id, 'linkedin', e.target.value)} placeholder="https://linkedin.com/in/username" /></div>
-              <div><label className={lCls}>Photo URL or /filename.jpg</label><input className={iCls} value={p.image} onChange={e => updatePillar(p.id, 'image', e.target.value)} placeholder="/pillar-name.jpg" /></div>
-              <div>
-                <label className={lCls}>Card Color Theme</label>
-                <select className={`${iCls} bg-[#0d1117] appearance-none capitalize`} value={p.colorScheme} onChange={e => updatePillar(p.id, 'colorScheme', e.target.value)}>
-                  {['blue','purple','pink','yellow','cyan','green','orange','red'].map(c => (
-                    <option key={c} value={c} className="capitalize">{c.charAt(0).toUpperCase() + c.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className={lCls}>Quote / Tagline</label>
-              <textarea rows={2} className={iCls} value={p.quote} onChange={e => updatePillar(p.id, 'quote', e.target.value)} placeholder="Their personal quote shown on the leadership card..." />
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => updatePillar(p.id, 'whiteBg', !p.whiteBg)}
-                className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-colors ${p.whiteBg ? 'bg-white/15 text-white border-white/30' : 'bg-white/5 text-white/40 border-white/10'}`}
-              >
-                {p.whiteBg ? '● White photo background' : '○ Dark photo background'}
-              </button>
-              <span className="text-white/30 text-[10px]">Use white bg if photo has a white/light background</span>
-            </div>
-          </div>
-        );
         return (
           <Section title="Core Pillars — Leadership Team" sub="Add, edit, or remove leadership cards shown on the homepage. Control name, role, quote, photo, LinkedIn, and color theme.">
             <div className="space-y-5 mb-4">
-              {pillarsState.map(p => <PillarRow key={p.id} p={p} />)}
+              {pillarsState.map(p => (
+                <div key={p.id} className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-electric-blue/20 flex items-center justify-center text-xs font-bold text-electric-blue flex-shrink-0">
+                        {p.name ? p.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}
+                      </div>
+                      <span className="text-white/60 text-sm font-medium truncate">{p.name || 'New Member'}</span>
+                    </div>
+                    <button onClick={() => removePillar(p.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center flex-shrink-0">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div><label className={lCls}>Full Name</label><input className={iCls} value={p.name} onChange={e => updatePillar(p.id, 'name', e.target.value)} placeholder="e.g. Chandan Bohra Jain" /></div>
+                    <div><label className={lCls}>Designation / Role</label><input className={iCls} value={p.designation} onChange={e => updatePillar(p.id, 'designation', e.target.value)} placeholder="e.g. Founder & CEO" /></div>
+                    <div><label className={lCls}>Contact Email</label><input className={iCls} value={p.contactEmail} onChange={e => updatePillar(p.id, 'contactEmail', e.target.value)} placeholder="name@gmail.com (leave blank to hide)" /></div>
+                    <div><label className={lCls}>LinkedIn URL</label><input className={iCls} value={p.linkedin} onChange={e => updatePillar(p.id, 'linkedin', e.target.value)} placeholder="https://linkedin.com/in/username" /></div>
+                    <div><label className={lCls}>Photo URL or /filename.jpg</label><input className={iCls} value={p.image} onChange={e => updatePillar(p.id, 'image', e.target.value)} placeholder="/pillar-name.jpg" /></div>
+                    <div>
+                      <label className={lCls}>Card Color Theme</label>
+                      <select className={`${iCls} bg-[#0d1117] appearance-none capitalize`} value={p.colorScheme} onChange={e => updatePillar(p.id, 'colorScheme', e.target.value)}>
+                        {['blue','purple','pink','yellow','cyan','green','orange','red'].map(c => (
+                          <option key={c} value={c} className="capitalize">{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={lCls}>Quote / Tagline</label>
+                    <textarea rows={2} className={iCls} value={p.quote} onChange={e => updatePillar(p.id, 'quote', e.target.value)} placeholder="Their personal quote shown on the leadership card..." />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => updatePillar(p.id, 'whiteBg', !p.whiteBg)}
+                      className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-colors ${p.whiteBg ? 'bg-white/15 text-white border-white/30' : 'bg-white/5 text-white/40 border-white/10'}`}
+                    >
+                      {p.whiteBg ? '● White photo background' : '○ Dark photo background'}
+                    </button>
+                    <span className="text-white/30 text-[10px]">Use white bg if photo has a white/light background</span>
+                  </div>
+                </div>
+              ))}
               {pillarsState.length === 0 && (
                 <div className="text-center py-8 text-white/30 text-sm">No pillars yet. Add your first team member below.</div>
               )}
@@ -514,74 +633,6 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
             });
           });
         };
-
-        const GalleryRow = ({ item }) => (
-          <div className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <button onClick={() => toggleGalleryItem(item.id)} className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${item.active !== false ? 'bg-green-600/30 text-green-400' : 'bg-white/8 text-white/40'}`}>
-                {item.active !== false ? '● Visible' : '○ Hidden'}
-              </button>
-              <button onClick={() => removeGalleryItem(item.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center flex-shrink-0">
-                <Trash2 size={13} />
-              </button>
-            </div>
-
-            {/* Preview + controls side by side */}
-            <div className="flex gap-4 items-start">
-              {/* Preview box */}
-              <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex-shrink-0 flex items-center justify-center">
-                {item.image
-                  ? <img src={item.image} alt={item.title || ''} className="w-full h-full object-cover" onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
-                  : null}
-                <div className={`w-full h-full items-center justify-center ${item.image ? 'hidden' : 'flex'}`}>
-                  <Image size={24} className="text-white/20" />
-                </div>
-              </div>
-
-              <div className="flex-1 space-y-2 min-w-0">
-                {/* Upload a new file to replace */}
-                <div>
-                  <label className={lCls}>Replace / Upload Photo</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={e => e.target.files[0] && handleImageUpload(item.id, e.target.files[0])}
-                    className="w-full text-xs text-white/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-electric-blue/20 file:text-electric-blue file:text-xs file:font-semibold hover:file:bg-electric-blue/30 cursor-pointer"
-                  />
-                </div>
-                {/* URL — only shown / active when no uploaded image */}
-                {(!item.image || !item.image.startsWith('data:')) && (
-                  <div>
-                    <label className={lCls}>Or Image URL</label>
-                    <input
-                      className={iCls}
-                      value={item.image || ''}
-                      onChange={e => updateGalleryItem(item.id, 'image', e.target.value)}
-                      placeholder="https://example.com/photo.jpg"
-                    />
-                  </div>
-                )}
-                {item.image?.startsWith('data:') && (
-                  <p className="text-green-400/70 text-[10px]">✓ Photo uploaded successfully</p>
-                )}
-              </div>
-            </div>
-
-            {/* Title + Category */}
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className={lCls}>Title / Caption</label>
-                <input className={iCls} value={item.title} onChange={e => updateGalleryItem(item.id, 'title', e.target.value)} placeholder="e.g. SOI Orientation Day" />
-              </div>
-              <div>
-                <label className={lCls}>Category</label>
-                <select className={`${iCls} bg-[#0d1117] appearance-none`} value={item.category} onChange={e => updateGalleryItem(item.id, 'category', e.target.value)}>
-                  {galleryCats.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
-        );
 
         return (
           <div className="space-y-5">
@@ -631,7 +682,60 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
                     No photos yet. Use Bulk Upload above or click "Add Single Photo".
                   </div>
                 ) : (
-                  galleryItems.map(item => <GalleryRow key={item.id} item={item} />)
+                  galleryItems.map(item => (
+                    <div key={item.id} className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <button onClick={() => toggleGalleryItem(item.id)} className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${item.active !== false ? 'bg-green-600/30 text-green-400' : 'bg-white/8 text-white/40'}`}>
+                          {item.active !== false ? '● Visible' : '○ Hidden'}
+                        </button>
+                        <button onClick={() => removeGalleryItem(item.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center flex-shrink-0">
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                      <div className="flex gap-4 items-start">
+                        <div className="w-24 h-24 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex-shrink-0 flex items-center justify-center">
+                          {item.image
+                            ? <img src={item.image} alt={item.title || ''} className="w-full h-full object-cover" onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
+                            : null}
+                          <div className={`w-full h-full items-center justify-center ${item.image ? 'hidden' : 'flex'}`}>
+                            <Image size={24} className="text-white/20" />
+                          </div>
+                        </div>
+                        <div className="flex-1 space-y-2 min-w-0">
+                          <div>
+                            <label className={lCls}>Replace / Upload Photo</label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={e => e.target.files[0] && handleImageUpload(item.id, e.target.files[0])}
+                              className="w-full text-xs text-white/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-electric-blue/20 file:text-electric-blue file:text-xs file:font-semibold hover:file:bg-electric-blue/30 cursor-pointer"
+                            />
+                          </div>
+                          {(!item.image || !item.image.startsWith('data:')) && (
+                            <div>
+                              <label className={lCls}>Or Image URL</label>
+                              <input className={iCls} value={item.image || ''} onChange={e => updateGalleryItem(item.id, 'image', e.target.value)} placeholder="https://example.com/photo.jpg" />
+                            </div>
+                          )}
+                          {item.image?.startsWith('data:') && (
+                            <p className="text-green-400/70 text-[10px]">✓ Photo uploaded successfully</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className={lCls}>Title / Caption</label>
+                          <input className={iCls} value={item.title} onChange={e => updateGalleryItem(item.id, 'title', e.target.value)} placeholder="e.g. SOI Orientation Day" />
+                        </div>
+                        <div>
+                          <label className={lCls}>Category</label>
+                          <select className={`${iCls} bg-[#0d1117] appearance-none`} value={item.category} onChange={e => updateGalleryItem(item.id, 'category', e.target.value)}>
+                            {galleryCats.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
               <div className="flex gap-3 flex-wrap">
@@ -644,34 +748,33 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
       }
 
       case 'clientreviews': {
-        const ReviewRow = ({ r }) => (
-          <div className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
-            <div className="flex items-center justify-between">
-              <button onClick={() => toggleClientReview(r.id)} className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${r.active !== false ? 'bg-green-600/30 text-green-400' : 'bg-white/8 text-white/40'}`}>
-                {r.active !== false ? '● Visible' : '○ Hidden'}
-              </button>
-              <button onClick={() => removeClientReview(r.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center"><Trash2 size={13} /></button>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div><label className={lCls}>Full Name</label><input className={iCls} value={r.name} onChange={e => updateClientReview(r.id, 'name', e.target.value)} placeholder="Rajesh Malhotra" /></div>
-              <div><label className={lCls}>Role / Company</label><input className={iCls} value={r.role} onChange={e => updateClientReview(r.id, 'role', e.target.value)} placeholder="CTO, Company Name" /></div>
-              <div><label className={lCls}>Location / City</label><input className={iCls} value={r.location || ''} onChange={e => updateClientReview(r.id, 'location', e.target.value)} placeholder="Bangalore" /></div>
-              <div>
-                <label className={lCls}>Star Rating</label>
-                <select className={`${iCls} bg-[#0d1117] appearance-none`} value={r.rating} onChange={e => updateClientReview(r.id, 'rating', parseInt(e.target.value))}>
-                  <option value={5}>⭐⭐⭐⭐⭐ (5)</option>
-                  <option value={4}>⭐⭐⭐⭐ (4)</option>
-                  <option value={3}>⭐⭐⭐ (3)</option>
-                </select>
-              </div>
-            </div>
-            <div><label className={lCls}>Review Text</label><textarea rows={3} className={iCls} value={r.text} onChange={e => updateClientReview(r.id, 'text', e.target.value)} placeholder="Write the client's review..." /></div>
-          </div>
-        );
         return (
           <Section title="Enterprise Client Reviews" sub="Add, edit, toggle or remove enterprise client testimonials shown on the homepage.">
             <div className="space-y-4 mb-4">
-              {clientRev.map(r => <ReviewRow key={r.id} r={r} />)}
+              {clientRev.map(r => (
+                <div key={r.id} className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => toggleClientReview(r.id)} className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${r.active !== false ? 'bg-green-600/30 text-green-400' : 'bg-white/8 text-white/40'}`}>
+                      {r.active !== false ? '● Visible' : '○ Hidden'}
+                    </button>
+                    <button onClick={() => removeClientReview(r.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center"><Trash2 size={13} /></button>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div><label className={lCls}>Full Name</label><input className={iCls} value={r.name} onChange={e => updateClientReview(r.id, 'name', e.target.value)} placeholder="Rajesh Malhotra" /></div>
+                    <div><label className={lCls}>Role / Company</label><input className={iCls} value={r.role} onChange={e => updateClientReview(r.id, 'role', e.target.value)} placeholder="CTO, Company Name" /></div>
+                    <div><label className={lCls}>Location / City</label><input className={iCls} value={r.location || ''} onChange={e => updateClientReview(r.id, 'location', e.target.value)} placeholder="Bangalore" /></div>
+                    <div>
+                      <label className={lCls}>Star Rating</label>
+                      <select className={`${iCls} bg-[#0d1117] appearance-none`} value={r.rating} onChange={e => updateClientReview(r.id, 'rating', parseInt(e.target.value))}>
+                        <option value={5}>⭐⭐⭐⭐⭐ (5)</option>
+                        <option value={4}>⭐⭐⭐⭐ (4)</option>
+                        <option value={3}>⭐⭐⭐ (3)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div><label className={lCls}>Review Text</label><textarea rows={3} className={iCls} value={r.text} onChange={e => updateClientReview(r.id, 'text', e.target.value)} placeholder="Write the client's review..." /></div>
+                </div>
+              ))}
             </div>
             <div className="flex gap-3 flex-wrap">
               <button onClick={addClientReview} className="btn-secondary text-sm flex items-center gap-2"><Plus size={14} /> Add Review</button>
@@ -682,38 +785,187 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
       }
 
       case 'studentreviews': {
-        const StudentRow = ({ r }) => (
-          <div className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
-            <div className="flex items-center justify-between">
-              <button onClick={() => toggleStudentReview(r.id)} className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${r.active !== false ? 'bg-green-600/30 text-green-400' : 'bg-white/8 text-white/40'}`}>
-                {r.active !== false ? '● Visible' : '○ Hidden'}
-              </button>
-              <button onClick={() => removeStudentReview(r.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center"><Trash2 size={13} /></button>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div><label className={lCls}>Full Name</label><input className={iCls} value={r.name} onChange={e => updateStudentReview(r.id, 'name', e.target.value)} placeholder="Ananya Kulkarni" /></div>
-              <div><label className={lCls}>Internship Track / Role</label><input className={iCls} value={r.role} onChange={e => updateStudentReview(r.id, 'role', e.target.value)} placeholder="SOI Intern — Web Development Track" /></div>
-              <div><label className={lCls}>College / University</label><input className={iCls} value={r.college || ''} onChange={e => updateStudentReview(r.id, 'college', e.target.value)} placeholder="KLE Technological University" /></div>
-              <div>
-                <label className={lCls}>Star Rating</label>
-                <select className={`${iCls} bg-[#0d1117] appearance-none`} value={r.rating} onChange={e => updateStudentReview(r.id, 'rating', parseInt(e.target.value))}>
-                  <option value={5}>⭐⭐⭐⭐⭐ (5)</option>
-                  <option value={4}>⭐⭐⭐⭐ (4)</option>
-                  <option value={3}>⭐⭐⭐ (3)</option>
-                </select>
-              </div>
-            </div>
-            <div><label className={lCls}>Review Text</label><textarea rows={3} className={iCls} value={r.text} onChange={e => updateStudentReview(r.id, 'text', e.target.value)} placeholder="Write the student's experience..." /></div>
-          </div>
-        );
         return (
           <Section title="SOI Student Experiences" sub="Add, edit, toggle or remove SOI student testimonials shown on the homepage.">
             <div className="space-y-4 mb-4">
-              {studentRev.map(r => <StudentRow key={r.id} r={r} />)}
+              {studentRev.map(r => (
+                <div key={r.id} className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => toggleStudentReview(r.id)} className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${r.active !== false ? 'bg-green-600/30 text-green-400' : 'bg-white/8 text-white/40'}`}>
+                      {r.active !== false ? '● Visible' : '○ Hidden'}
+                    </button>
+                    <button onClick={() => removeStudentReview(r.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center"><Trash2 size={13} /></button>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div><label className={lCls}>Full Name</label><input className={iCls} value={r.name} onChange={e => updateStudentReview(r.id, 'name', e.target.value)} placeholder="Ananya Kulkarni" /></div>
+                    <div><label className={lCls}>Internship Track / Role</label><input className={iCls} value={r.role} onChange={e => updateStudentReview(r.id, 'role', e.target.value)} placeholder="SOI Intern — Web Development Track" /></div>
+                    <div><label className={lCls}>College / University</label><input className={iCls} value={r.college || ''} onChange={e => updateStudentReview(r.id, 'college', e.target.value)} placeholder="KLE Technological University" /></div>
+                    <div>
+                      <label className={lCls}>Star Rating</label>
+                      <select className={`${iCls} bg-[#0d1117] appearance-none`} value={r.rating} onChange={e => updateStudentReview(r.id, 'rating', parseInt(e.target.value))}>
+                        <option value={5}>⭐⭐⭐⭐⭐ (5)</option>
+                        <option value={4}>⭐⭐⭐⭐ (4)</option>
+                        <option value={3}>⭐⭐⭐ (3)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div><label className={lCls}>Review Text</label><textarea rows={3} className={iCls} value={r.text} onChange={e => updateStudentReview(r.id, 'text', e.target.value)} placeholder="Write the student's experience..." /></div>
+                </div>
+              ))}
             </div>
             <div className="flex gap-3 flex-wrap">
               <button onClick={addStudentReview} className="btn-secondary text-sm flex items-center gap-2"><Plus size={14} /> Add Review</button>
               <SaveBtn onClick={saveStudentReviews} saved={saved.studentreviews} />
+            </div>
+          </Section>
+        );
+      }
+
+      case 'certificates': {
+        const filtered = searchCerts(certSearch);
+        return (
+          <Section title="Certificate Management" sub="Add, edit, search or delete certificate records. Certificate numbers must be unique. All changes are reflected live on the verification portal.">
+            {/* Search */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+                <input
+                  className={`${iCls} pl-9`}
+                  value={certSearch}
+                  onChange={e => setCertSearch(e.target.value)}
+                  placeholder="Search by name, certificate number, or specialization..."
+                />
+              </div>
+            </div>
+
+            {/* Bulk Import Toggle */}
+            <div className="mb-4">
+              <button
+                onClick={() => setShowBulkImport(o => !o)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  showBulkImport
+                    ? 'bg-electric-blue/20 text-electric-blue border border-electric-blue/20'
+                    : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'
+                }`}
+              >
+                <Upload size={14} />
+                {showBulkImport ? 'Close Bulk Import' : 'Bulk Import from Excel'}
+              </button>
+            </div>
+
+            {/* Bulk Import Spreadsheet */}
+            {showBulkImport && (
+              <div className="mb-6 p-4 bg-white/3 rounded-xl border border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white text-sm font-semibold">Paste from Excel</h4>
+                    <p className="text-white/40 text-xs mt-0.5">Copy rows from Excel and paste below. Columns: <strong>Candidate Name</strong> <span className="text-white/20">|</span> <strong>Certificate No.</strong> <span className="text-white/20">|</span> <strong>Specialization</strong> <span className="text-white/20">|</span> <strong>Date (YYYY-MM-DD)</strong></p>
+                  </div>
+                  <span className="text-white/30 text-[10px]">Tab-separated (Ctrl+V)</span>
+                </div>
+                <textarea
+                  className="w-full bg-[#0d1117] border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-electric-blue/60 transition-all font-mono"
+                  rows={8}
+                  value={bulkText}
+                  onChange={e => setBulkText(e.target.value)}
+                  placeholder={`Paste your Excel data here...\n\nExample:\nRahul Sharma\tINE-2025-001\tFull Stack Web Development\t2025-03-15\nAnanya Kulkarni\tINE-2025-002\tAI & Machine Learning\t2025-04-20`}
+                />
+                {bulkText.trim() && (() => {
+                  const parsed = parseBulkData(bulkText);
+                  if (parsed.length === 0) return null;
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-green-400/70 text-xs font-medium">{parsed.length} record(s) detected</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleBulkImport}
+                            className="px-4 py-1.5 bg-electric-blue hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5"
+                          >
+                            <Upload size={12} /> Import All
+                          </button>
+                        </div>
+                      </div>
+                      {/* Preview table */}
+                      <div className="overflow-x-auto border border-white/5 rounded-lg">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="bg-white/5 text-white/50 uppercase tracking-wide">
+                              <th className="text-left px-3 py-2 font-medium">Candidate Name</th>
+                              <th className="text-left px-3 py-2 font-medium">Certificate No.</th>
+                              <th className="text-left px-3 py-2 font-medium">Specialization</th>
+                              <th className="text-left px-3 py-2 font-medium">Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {parsed.map((c, i) => (
+                              <tr key={i} className="border-t border-white/5 hover:bg-white/3">
+                                <td className="px-3 py-1.5 text-white/80">{c.candidateName}</td>
+                                <td className="px-3 py-1.5 text-white/80 font-mono">{c.certificateNumber}</td>
+                                <td className="px-3 py-1.5 text-white/60">{c.specialization}</td>
+                                <td className="px-3 py-1.5 text-white/60">{c.dateOfIssue}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {bulkText.trim() && parseBulkData(bulkText).length === 0 && (
+                  <p className="text-red-400/60 text-xs">No valid records found. Make sure data is tab-separated (copy from Excel).</p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-4 mb-4">
+              {filtered.length === 0 ? (
+                <div className="text-center py-10 text-white/30 text-sm border border-dashed border-white/10 rounded-xl">
+                  {certSearch ? 'No matching certificates found.' : 'No certificates yet. Click "Add Certificate" to create one.'}
+                </div>
+              ) : (
+                filtered.map(c => (
+                  <div key={c.id} className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <Award size={14} className="text-yellow-500/60" />
+                        <span className="text-white/60 text-sm font-medium truncate">{c.candidateName || 'New Certificate'}</span>
+                      </div>
+                      <button onClick={() => removeCert(c.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center flex-shrink-0">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className={lCls}>Candidate Name</label>
+                        <input className={iCls} value={c.candidateName} onChange={e => updateCert(c.id, 'candidateName', e.target.value)} placeholder="e.g. Rahul Sharma" />
+                      </div>
+                      <div>
+                        <label className={lCls}>
+                          Certificate Number
+                          {certDuplicateErr(c.id, c.certificateNumber) && (
+                            <span className="text-red-400 text-[10px] ml-2">⚠ Duplicate!</span>
+                          )}
+                        </label>
+                        <input className={iCls} value={c.certificateNumber} onChange={e => updateCert(c.id, 'certificateNumber', e.target.value)} placeholder="e.g. INE-2025-001" />
+                      </div>
+                      <div>
+                        <label className={lCls}>Specialization / Domain</label>
+                        <input className={iCls} value={c.specialization} onChange={e => updateCert(c.id, 'specialization', e.target.value)} placeholder="e.g. Full Stack Web Development" />
+                      </div>
+                      <div>
+                        <label className={lCls}>Date of Issue</label>
+                        <input type="date" className={`${iCls} bg-[#0d1117]`} value={c.dateOfIssue} onChange={e => updateCert(c.id, 'dateOfIssue', e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={addCert} className="btn-secondary text-sm flex items-center gap-2"><Plus size={14} /> Add Certificate</button>
+              <SaveBtn onClick={saveCerts} saved={saved.certificates} />
             </div>
           </Section>
         );
@@ -814,7 +1066,7 @@ function AdminDashboard({ data, updateData, updateGallery, persistGallery, delet
 
 // ─── Root export ──────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const { data, updateData, updateGallery, persistGallery, deleteGalleryItem, login, logout, isSupabaseConnected } = useAdmin();
+  const { data, updateData, updateGallery, persistGallery, deleteGalleryItem, login, logout, isSupabaseConnected, loadGallery } = useAdmin();
   if (!data.isAdminLoggedIn) return <LoginScreen onLogin={login} />;
   return (
     <AdminDashboard
@@ -825,6 +1077,7 @@ export default function AdminPage() {
       deleteGalleryItem={deleteGalleryItem}
       logout={logout}
       isSupabaseConnected={isSupabaseConnected}
+      loadGallery={loadGallery}
     />
   );
 }
