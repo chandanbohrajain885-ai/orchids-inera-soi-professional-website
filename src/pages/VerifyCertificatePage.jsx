@@ -31,7 +31,7 @@ export default function VerifyCertificatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-deep-black grid-pattern">
+    <div className="min-h-screen min-h-[100dvh] bg-deep-black grid-pattern">
       {/* Simple header bar */}
       <div className="border-b border-white/5 bg-[#0a0a0e]/80 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -77,7 +77,7 @@ export default function VerifyCertificatePage() {
             </div>
             <button
               type="submit"
-              className="px-6 py-4 bg-electric-blue hover:bg-blue-500 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-electric-blue/20"
+              className="w-full sm:w-auto px-6 py-4 bg-electric-blue hover:bg-blue-500 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-electric-blue/20"
             >
               <Search size={18} />
               Verify Certificate
@@ -91,38 +91,38 @@ export default function VerifyCertificatePage() {
             {result === 'found' && certificate ? (
               <div className="bg-white/5 border border-green-500/30 rounded-2xl p-5 md:p-8 shadow-xl shadow-green-500/5">
                 {/* Success header */}
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-4">
-                    <CheckCircle size={36} className="text-green-400" />
+                <div className="text-center mb-5 md:mb-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-green-500/20 mb-3 md:mb-4">
+                    <CheckCircle size={28} className="text-green-400 md:w-9 md:h-9" />
                   </div>
-                  <h2 className="text-green-400 font-sora font-semibold text-lg">Certificate Verified Successfully</h2>
+                  <h2 className="text-green-400 font-sora font-semibold text-base md:text-lg">Verified Successfully</h2>
                 </div>
 
                 {/* Candidate name — prominent */}
-                <div className="text-center mb-6 border-b border-white/10 pb-6">
-                  <p className="text-white/40 text-xs uppercase tracking-widest mb-2">Candidate Name</p>
-                  <h3 className="font-sora text-2xl md:text-3xl font-bold text-white">
+                <div className="text-center mb-5 md:mb-6 border-b border-white/10 pb-5 md:pb-6">
+                  <p className="text-white/40 text-[10px] md:text-xs uppercase tracking-widest mb-1.5 md:mb-2">Candidate Name</p>
+                  <h3 className="font-sora text-xl md:text-3xl font-bold text-white break-words">
                     {certificate.candidateName}
                   </h3>
                 </div>
 
                 {/* Details */}
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center py-3 border-b border-white/5">
-                    <span className="text-white/40 text-sm">Certificate Number</span>
-                    <span className="text-white font-medium text-sm font-mono">{certificate.certificateNumber}</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-white/5 gap-0.5 sm:gap-0">
+                    <span className="text-white/40 text-xs sm:text-sm">Certificate Number</span>
+                    <span className="text-white font-medium text-sm font-mono break-all">{certificate.certificateNumber}</span>
                   </div>
-                  <div className="flex justify-between items-center py-3 border-b border-white/5">
-                    <span className="text-white/40 text-sm">Specialization</span>
-                    <span className="text-white font-medium text-sm">{certificate.specialization}</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-white/5 gap-0.5 sm:gap-0">
+                    <span className="text-white/40 text-xs sm:text-sm">Specialization</span>
+                    <span className="text-white font-medium text-sm break-words">{certificate.specialization}</span>
                   </div>
-                  <div className="flex justify-between items-center py-3 border-b border-white/5">
-                    <span className="text-white/40 text-sm">Date of Issue</span>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-white/5 gap-0.5 sm:gap-0">
+                    <span className="text-white/40 text-xs sm:text-sm">Date of Issue</span>
                     <span className="text-white font-medium text-sm">{certificate.dateOfIssue}</span>
                   </div>
-                  <div className="flex justify-between items-center py-3">
-                    <span className="text-white/40 text-sm">Status</span>
-                    <span className="inline-flex items-center gap-1.5 text-green-400 font-semibold text-sm bg-green-500/10 px-3 py-1 rounded-full">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 gap-0.5 sm:gap-0">
+                    <span className="text-white/40 text-xs sm:text-sm">Status</span>
+                    <span className="inline-flex items-center gap-1.5 text-green-400 font-semibold text-sm bg-green-500/10 px-3 py-1 rounded-full self-start sm:self-auto">
                       <CheckCircle size={12} />
                       VALID CERTIFICATE
                     </span>
@@ -131,10 +131,10 @@ export default function VerifyCertificatePage() {
               </div>
             ) : result === 'notfound' ? (
               <div className="bg-white/5 border border-red-500/30 rounded-2xl p-5 md:p-8 shadow-xl shadow-red-500/5 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/20 mb-4">
-                  <XCircle size={36} className="text-red-400" />
+                <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-red-500/20 mb-3 md:mb-4">
+                  <XCircle size={28} className="text-red-400 md:w-9 md:h-9" />
                 </div>
-                <h2 className="text-red-400 font-sora font-semibold text-lg mb-2">Certificate Not Found</h2>
+                <h2 className="text-red-400 font-sora font-semibold text-base md:text-lg mb-2">Certificate Not Found</h2>
                 <p className="text-white/50 text-sm max-w-md mx-auto">
                   The entered certificate number does not exist in our records.
                 </p>
