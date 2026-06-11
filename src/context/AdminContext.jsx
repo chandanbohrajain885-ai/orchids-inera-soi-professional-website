@@ -45,6 +45,20 @@ const defaultData = {
     mode: 'Online Only',
     openForRegistration: true,
   },
+  aboutUs: {
+    mission: 'To empower businesses through intelligent technology, scalable software systems, and innovative digital solutions.',
+    vision: 'To become a globally recognized technology company driving the future of intelligent digital transformation.',
+    aboutText: 'INERA Software Private Limited is a modern technology company focused on building intelligent software systems, enterprise applications, automation platforms, and digital transformation solutions.',
+    aboutText2: 'The company specializes in scalable technology ecosystems that help organizations improve efficiency, streamline operations, and embrace intelligent digital innovation.',
+    aboutText3: 'INERA combines technology, strategy, and execution to create future-ready digital systems for businesses and institutions across India and beyond.',
+    headline: 'Intelligence at the Speed of Thought',
+    tagline: 'Who We Are',
+    founderName: 'Chandan Bohra Jain',
+    founderTitle: 'Founder & CEO',
+    founderMessage: 'We built INERA Software with one conviction — technology should not just support business, it should intelligently drive it. Our mission is to build systems that think, adapt, and execute at the speed of modern business.',
+    location: 'Belagavi, Karnataka',
+    offices: 'Bangalore, Pune, Belagavi',
+  },
   pillars: [
     { id: 1, name: 'Chandan Bohra Jain', designation: 'Founder & CEO', image: '/pillar-chandan.jpg', quote: "Innovation begins when vision meets fearless execution. At InEra, we don't just adapt to the future — we engineer it.", contactEmail: 'chandan.inera@gmail.com', linkedin: 'https://linkedin.com/in/chandan-bohra-jain', colorScheme: 'blue', whiteBg: false },
     { id: 2, name: 'Yallappa Belavanaki', designation: 'Co-Founder', image: '/pillar-yallappa.jpg', quote: 'Strong systems are built through trust, discipline, and purpose. Every challenge is an opportunity to create something extraordinary.', contactEmail: '', linkedin: 'https://linkedin.com/in/yallappa-belavanaki', colorScheme: 'purple', whiteBg: false },
@@ -227,12 +241,49 @@ const deleteGalleryItemFromSupabase = async (id) => {
   }
 };
 
+// ── Built-in data API (for cross-device sync) ────────────────────────────────
+const DATA_API = ''; // proxied by Vite to http://localhost:4000
+
+const pushToDataApi = async (adminData, galleryItems) => {
+  try {
+    const meta = galleryItems.map(({ image, ...rest }) => rest);
+    const imgs = {};
+    galleryItems.forEach(i => { if (i.image) imgs[i.id] = i.image; });
+    const payload = {
+      adminData: { ...adminData },
+      galleryMeta: meta,
+      galleryImages: imgs,
+    };
+    delete payload.adminData.isAdminLoggedIn;
+    delete payload.adminData.galleryItems;
+    await fetch(`${DATA_API}/api/data`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    // API not available — silently fall back to localStorage only
+  }
+};
+
+const pullFromDataApi = async () => {
+  try {
+    const res = await fetch(`${DATA_API}/api/data`, { method: 'GET' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+};
+
 // ── Provider ──────────────────────────────────────────────────────────────────
 export function AdminProvider({ children }) {
   const [data, setData] = useState(() => safeLoadMainData() ?? defaultData);
   const [galleryItems, setGalleryItems] = useState([]); // lazy-loaded on demand
   const [galleryLoaded, setGalleryLoaded] = useState(false);
   const [supabaseLoaded, setSupabaseLoaded] = useState(false);
+
+  const [dataApiReady, setDataApiReady] = useState(false);
 
   const loadGallery = useCallback(() => {
     if (galleryLoaded) return;
@@ -241,30 +292,76 @@ export function AdminProvider({ children }) {
     setGalleryLoaded(true);
   }, [galleryLoaded]);
 
-  // Load from Supabase on mount (non-blocking — shows localStorage data instantly)
+  // Load from data API + Supabase on mount (non-blocking)
   useEffect(() => {
-    if (!isSupabaseReady() || supabaseLoaded) return;
     (async () => {
-      const [sbData, sbGallery] = await Promise.all([
-        loadFromSupabase(),
-        loadGalleryFromSupabase(),
-      ]);
-      if (sbData) {
-        setData(prev => ({ ...sbData, isAdminLoggedIn: prev.isAdminLoggedIn }));
+      // 1. Try built-in data API first (fastest for cross-device sync)
+      const cloudData = await pullFromDataApi();
+      const hasCloudData = cloudData && cloudData.adminData && Object.keys(cloudData.adminData).length > 1; // more than just {test:hello}
+      const hasLocalData = localStorage.getItem('inera_admin_data');
+
+      if (hasCloudData) {
+        // Cloud has real data — use it (latest from any device)
+        saveMainToStorage(cloudData.adminData);
+        setData(prev => ({ ...defaultData, ...cloudData.adminData, isAdminLoggedIn: prev.isAdminLoggedIn }));
+        if (cloudData.galleryMeta && cloudData.galleryImages) {
+          localStorage.setItem('inera_gallery_meta', JSON.stringify(cloudData.galleryMeta));
+          localStorage.setItem('inera_gallery_images', JSON.stringify(cloudData.galleryImages));
+          const restored = cloudData.galleryMeta.map(item => ({ ...item, image: cloudData.galleryImages[item.id] ?? '' }));
+          setGalleryItems(restored);
+          setGalleryLoaded(true);
+        }
+        setDataApiReady(true);
+      } else if (hasLocalData) {
+        // Browser has data but cloud doesn't — seed the cloud (first-time sync)
+        const localRaw = localStorage.getItem('inera_admin_data');
+        const localGalleryMeta = localStorage.getItem('inera_gallery_meta');
+        const localGalleryImgs = localStorage.getItem('inera_gallery_images');
+        if (localRaw) {
+          const localData = JSON.parse(localRaw);
+          const localGallery = localGalleryMeta ? JSON.parse(localGalleryMeta) : [];
+          const localImages = localGalleryImgs ? JSON.parse(localGalleryImgs) : {};
+          await pushToDataApi(localData, localGallery.map(item => ({ ...item, image: localImages[item.id] ?? '' })));
+          if (localGallery.length > 0) {
+            setGalleryItems(localGallery.map(item => ({ ...item, image: localImages[item.id] ?? '' })));
+            setGalleryLoaded(true);
+          }
+        }
+        setDataApiReady(true);
       }
-      if (sbGallery !== null) {
-        setGalleryItems(sbGallery);
-        setGalleryLoaded(true);
+
+      // 2. Try Supabase (if configured)
+      if (isSupabaseReady() && !supabaseLoaded) {
+        const [sbData, sbGallery] = await Promise.all([
+          loadFromSupabase(),
+          loadGalleryFromSupabase(),
+        ]);
+        if (sbData) {
+          // Cache to localStorage so next load is instant (no network wait)
+          saveMainToStorage(sbData);
+          if (sbGallery && sbGallery.length > 0) {
+            saveGalleryToStorage(sbGallery);
+            setGalleryItems(sbGallery);
+            setGalleryLoaded(true);
+          }
+          setData(prev => ({ ...sbData, isAdminLoggedIn: prev.isAdminLoggedIn }));
+        }
+        if (sbGallery !== null) {
+          setGalleryItems(sbGallery);
+          setGalleryLoaded(true);
+        }
+        setSupabaseLoaded(true);
       }
-      setSupabaseLoaded(true);
     })();
+    return;
   }, []);
 
-  // Save data to both Supabase + localStorage
+  // Save data to localStorage + Supabase + built-in data API
   const persistData = useCallback((updatedData) => {
     saveMainToStorage(updatedData);
     saveToSupabase(updatedData); // fire-and-forget
-  }, []);
+    pushToDataApi(updatedData, galleryItems); // fire-and-forget cross-device sync
+  }, [galleryItems]);
 
   const updateData = (key, value) => {
     setData(prev => {
@@ -285,11 +382,13 @@ export function AdminProvider({ children }) {
   // Gallery — in-memory update only (for live preview while editing)
   const updateGallery = (items) => setGalleryItems(items);
 
-  // Gallery — persist to storage + Supabase
+  // Gallery — persist to storage + Supabase + data API
   const persistGallery = async (items) => {
     setGalleryItems(items);
     // Always save to localStorage as fallback
     saveGalleryToStorage(items);
+    // Push to data API for cross-device sync
+    pushToDataApi(data, items); // fire-and-forget
     // If Supabase is ready, also sync to Supabase
     if (isSupabaseReady()) {
       try {
@@ -309,11 +408,13 @@ export function AdminProvider({ children }) {
 
   // Delete a gallery item from both storages
   const deleteGalleryItem = async (id) => {
+    let updatedItems;
     setGalleryItems(prev => {
-      const updated = prev.filter(x => x.id !== id && String(x.id) !== String(id));
-      saveGalleryToStorage(updated);
-      return updated;
+      updatedItems = prev.filter(x => x.id !== id && String(x.id) !== String(id));
+      saveGalleryToStorage(updatedItems);
+      return updatedItems;
     });
+    pushToDataApi(data, updatedItems || []); // sync deletion to other devices
     if (isSupabaseReady()) {
       await deleteGalleryItemFromSupabase(id);
     }
@@ -329,6 +430,27 @@ export function AdminProvider({ children }) {
 
   const logout = () => setData(prev => ({ ...prev, isAdminLoggedIn: false }));
 
+  // Bulk import — replaces all data (admin settings + gallery) with exported data
+  const restoreAllData = (exportedJson) => {
+    try {
+      const { adminData, galleryMeta, galleryImages } = exportedJson;
+      if (adminData) {
+        saveMainToStorage(adminData);
+        setData(prev => ({ ...defaultData, ...adminData, isAdminLoggedIn: prev.isAdminLoggedIn }));
+      }
+      if (galleryMeta && galleryImages) {
+        localStorage.setItem('inera_gallery_meta', JSON.stringify(galleryMeta));
+        localStorage.setItem('inera_gallery_images', JSON.stringify(galleryImages));
+        const restored = galleryMeta.map(item => ({ ...item, image: galleryImages[item.id] ?? '' }));
+        setGalleryItems(restored);
+      }
+      return true;
+    } catch (e) {
+      console.warn('Data restore failed:', e);
+      return false;
+    }
+  };
+
   const combinedData = { ...data, galleryItems };
 
   return (
@@ -342,6 +464,8 @@ export function AdminProvider({ children }) {
       login,
       logout,
       loadGallery,
+      restoreAllData,
+      dataApiReady,
       isSupabaseConnected: isSupabaseReady(),
     }}>
       {children}

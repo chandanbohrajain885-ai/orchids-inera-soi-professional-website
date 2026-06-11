@@ -1,6 +1,7 @@
 {
   "startupCommands": [
-    "npm install; npm run dev -- --port 3000 --host"
+    "npm install; npx vite build",
+    "PORT=4000 node data-server.js"
   ],
   "projectId": "03d1dddb-496c-4b31-9496-3737ff63fb63",
   "templateId": "any"

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Megaphone, Star, Briefcase, Link2, Users,
   Phone, Lock, LogOut, Eye, EyeOff, Save, Plus, Trash2, Check,
-  X, ChevronRight, ArrowLeft, Globe, GraduationCap, MessageSquare, Image, Shield, Award, BarChart3, Search, Upload
+  X, ChevronRight, ArrowLeft, Globe, GraduationCap, MessageSquare, Image, Shield, Award, BarChart3, Search, Upload, Download, FileText
 } from 'lucide-react';
 
 const tabs = [
@@ -16,6 +16,7 @@ const tabs = [
   { id: 'stats',       label: 'Stats',             icon: BarChart3 },
   { id: 'careers',     label: 'Careers',           icon: Briefcase },
   { id: 'soi',         label: 'SOI Settings',      icon: GraduationCap },
+  { id: 'aboutus',     label: 'About Us',          icon: FileText },
   { id: 'pillars',     label: 'Core Pillars',      icon: Users },
   { id: 'gallery',     label: 'Gallery',           icon: Image },
   { id: 'clientreviews', label: 'Client Reviews',  icon: MessageSquare },
@@ -116,7 +117,7 @@ function LoginScreen({ onLogin }) {
 }
 
 // ─── Dashboard (all hooks here — no conditional returns above hooks) ──────────
-function AdminDashboard({ data, updateData, updateGallery, persistGallery, deleteGalleryItem, logout, isSupabaseConnected, loadGallery }) {
+function AdminDashboard({ data, updateData, updateGallery, persistGallery, deleteGalleryItem, logout, isSupabaseConnected, loadGallery, restoreAllData, dataApiReady }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [saved, setSaved] = useState({});
@@ -186,6 +187,10 @@ const [certSearch,    setCertSearch]    = useState('');
 
   // ── SOI ─────────────────────────────────────────────────────────────────────
   const saveSoi = () => { updateData('soi', soiState); flag('soi'); };
+
+  // ── About Us ────────────────────────────────────────────────────────────────
+  const [aboutUsState, setAboutUsState] = useState(() => ({ ...(data.aboutUs || {}) }));
+  const saveAboutUs = () => { updateData('aboutUs', aboutUsState); flag('aboutus'); };
 
   // ── Pillars CRUD ────────────────────────────────────────────────────────────
   const PILLAR_COLORS = ['blue', 'purple', 'pink', 'yellow', 'cyan', 'green', 'orange', 'red'];
@@ -386,6 +391,63 @@ const [certSearch,    setCertSearch]    = useState('');
                 </button>
               ))}
             </div>
+
+            {/* Data Management — Export/Import */}
+            <div className="glass rounded-2xl p-5 border border-white/8">
+              <h3 className="font-sora font-semibold text-white text-sm mb-3 flex items-center gap-2">
+                <Save size={14} className="text-electric-blue" /> Data Management
+              </h3>
+              <p className="text-white/40 text-xs mb-4">Export your site data to transfer between environments (dev → production). Import restores everything including gallery photos.</p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => {
+                    const adminRaw = localStorage.getItem('inera_admin_data');
+                    const galleryMeta = localStorage.getItem('inera_gallery_meta');
+                    const galleryImages = localStorage.getItem('inera_gallery_images');
+                    const exportData = {
+                      adminData: adminRaw ? JSON.parse(adminRaw) : {},
+                      galleryMeta: galleryMeta ? JSON.parse(galleryMeta) : [],
+                      galleryImages: galleryImages ? JSON.parse(galleryImages) : {},
+                    };
+                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = `inera-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                    a.click(); URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-white/8 hover:bg-white/12 text-white text-xs font-semibold rounded-lg transition-all"
+                >
+                  <Download size={13} /> Export Data
+                </button>
+                <label className="flex items-center gap-1.5 px-4 py-2 bg-white/8 hover:bg-white/12 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
+                  <Upload size={13} /> Import Data
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        try {
+                          const imported = JSON.parse(ev.target.result);
+                          const ok = restoreAllData(imported);
+                          if (ok) {
+                            alert('Data imported successfully! The page will reload to apply changes.');
+                            window.location.reload();
+                          } else {
+                            alert('Import failed. Check the file format.');
+                          }
+                        } catch { alert('Invalid JSON file.'); }
+                      };
+                      reader.readAsText(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
           </div>
         );
 
@@ -555,6 +617,31 @@ const [certSearch,    setCertSearch]    = useState('');
                 </div>
               </div>
               <SaveBtn onClick={saveSoi} saved={saved.soi} />
+            </div>
+          </Section>
+        );
+
+      case 'aboutus':
+        return (
+          <Section title="About Us Page Content" sub="Edit all text content shown on the About Us page. Changes reflect immediately.">
+            <div className="space-y-4">
+              <div><label className={lCls}>Page Tagline</label><input className={iCls} value={aboutUsState.tagline} onChange={e => setAboutUsState(p => ({ ...p, tagline: e.target.value }))} /></div>
+              <div><label className={lCls}>Main Headline</label><input className={iCls} value={aboutUsState.headline} onChange={e => setAboutUsState(p => ({ ...p, headline: e.target.value }))} /></div>
+              <div><label className={lCls}>About Paragraph 1</label><textarea rows={3} className={iCls} value={aboutUsState.aboutText} onChange={e => setAboutUsState(p => ({ ...p, aboutText: e.target.value }))} /></div>
+              <div><label className={lCls}>About Paragraph 2</label><textarea rows={3} className={iCls} value={aboutUsState.aboutText2} onChange={e => setAboutUsState(p => ({ ...p, aboutText2: e.target.value }))} /></div>
+              <div><label className={lCls}>About Paragraph 3</label><textarea rows={3} className={iCls} value={aboutUsState.aboutText3} onChange={e => setAboutUsState(p => ({ ...p, aboutText3: e.target.value }))} /></div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div><label className={lCls}>Mission Statement</label><textarea rows={3} className={iCls} value={aboutUsState.mission} onChange={e => setAboutUsState(p => ({ ...p, mission: e.target.value }))} /></div>
+                <div><label className={lCls}>Vision Statement</label><textarea rows={3} className={iCls} value={aboutUsState.vision} onChange={e => setAboutUsState(p => ({ ...p, vision: e.target.value }))} /></div>
+              </div>
+              <div><label className={lCls}>Founder Name</label><input className={iCls} value={aboutUsState.founderName} onChange={e => setAboutUsState(p => ({ ...p, founderName: e.target.value }))} /></div>
+              <div><label className={lCls}>Founder Title</label><input className={iCls} value={aboutUsState.founderTitle} onChange={e => setAboutUsState(p => ({ ...p, founderTitle: e.target.value }))} /></div>
+              <div><label className={lCls}>Founder Message (Quote)</label><textarea rows={3} className={iCls} value={aboutUsState.founderMessage} onChange={e => setAboutUsState(p => ({ ...p, founderMessage: e.target.value }))} /></div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div><label className={lCls}>Headquarters Location</label><input className={iCls} value={aboutUsState.location} onChange={e => setAboutUsState(p => ({ ...p, location: e.target.value }))} /></div>
+                <div><label className={lCls}>Office Cities</label><input className={iCls} value={aboutUsState.offices} onChange={e => setAboutUsState(p => ({ ...p, offices: e.target.value }))} /></div>
+              </div>
+              <SaveBtn onClick={saveAboutUs} saved={saved.aboutus} />
             </div>
           </Section>
         );
@@ -1031,22 +1118,19 @@ const [certSearch,    setCertSearch]    = useState('');
             <span className="text-white/15 text-xs">/</span>
             <span className="text-white/60 text-xs font-medium">{tabs.find(t => t.id === activeTab)?.label}</span>
           </div>
-          <div className="flex items-center gap-4">
-            {isSupabaseConnected ? (
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
-                <span className="text-emerald-400/70 text-xs font-medium">Supabase</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5" title="Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env to enable cloud sync">
-                <span className="w-2 h-2 rounded-full bg-yellow-500/60 inline-block" />
-                <span className="text-yellow-500/50 text-xs">Local only</span>
+          <div className="flex items-center gap-3">
+            {dataApiReady !== undefined && (
+              <div className="flex items-center gap-1.5" title={dataApiReady ? 'Cross-device sync active — all devices see the same data' : 'Start the data API server (node data-server.js) for cross-device sync'}>
+                <span className={`w-2 h-2 rounded-full animate-pulse inline-block ${dataApiReady ? 'bg-emerald-400' : 'bg-yellow-500/60'}`} />
+                <span className={`text-xs font-medium ${dataApiReady ? 'text-emerald-400/70' : 'text-yellow-500/50'}`}>{dataApiReady ? 'Cloud Sync' : 'Local only'}</span>
               </div>
             )}
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
-              <span className="text-white/40 text-xs">Live</span>
-            </div>
+            {isSupabaseConnected && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse inline-block" />
+                <span className="text-blue-400/70 text-xs font-medium">Supabase</span>
+              </div>
+            )}
           </div>
         </header>
 
@@ -1066,7 +1150,7 @@ const [certSearch,    setCertSearch]    = useState('');
 
 // ─── Root export ──────────────────────────────────────────────────────────────
 export default function AdminPage() {
-  const { data, updateData, updateGallery, persistGallery, deleteGalleryItem, login, logout, isSupabaseConnected, loadGallery } = useAdmin();
+  const { data, updateData, updateGallery, persistGallery, deleteGalleryItem, login, logout, isSupabaseConnected, loadGallery, restoreAllData, dataApiReady } = useAdmin();
   if (!data.isAdminLoggedIn) return <LoginScreen onLogin={login} />;
   return (
     <AdminDashboard
@@ -1078,6 +1162,8 @@ export default function AdminPage() {
       logout={logout}
       isSupabaseConnected={isSupabaseConnected}
       loadGallery={loadGallery}
+      restoreAllData={restoreAllData}
+      dataApiReady={dataApiReady}
     />
   );
 }

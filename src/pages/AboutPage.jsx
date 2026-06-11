@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useAdmin } from '../context/AdminContext';
 import { Target, Eye, Lightbulb, Award, Zap, Shield, TrendingUp, Users2, ArrowRight } from 'lucide-react';
 
 const values = [
@@ -11,6 +12,9 @@ const values = [
 ];
 
 export default function AboutPage() {
+  const { data } = useAdmin();
+  const au = data.aboutUs || {};
+
   return (
     <div className="pt-20 overflow-hidden">
       {/* Hero */}
@@ -19,13 +23,13 @@ export default function AboutPage() {
         <div className="absolute top-0 right-0 w-80 h-80 bg-electric-blue/8 rounded-full blur-3xl" />
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-8 border border-electric-blue/20">
-            <span className="text-neon-cyan text-xs font-medium uppercase tracking-widest">Our Story</span>
+            <span className="text-neon-cyan text-xs font-medium uppercase tracking-widest">{au.tagline || 'Our Story'}</span>
           </div>
           <h1 className="font-sora text-4xl md:text-6xl font-bold text-white mb-6 animate-fade-in-up">
-            Who We Are
+            {au.headline || 'Who We Are'}
           </h1>
           <p className="text-white/60 text-lg leading-relaxed">
-            A modern technology company building intelligent software systems for a future-ready world.
+            {au.aboutText || 'A modern technology company building intelligent software systems for a future-ready world.'}
           </p>
         </div>
       </section>
@@ -38,18 +42,12 @@ export default function AboutPage() {
               <div className="w-8 h-px bg-neon-cyan" /> About INERA
             </div>
             <h2 className="font-sora text-3xl md:text-4xl font-bold text-white mb-6">
-              Intelligence at the<br /><span className="blue-gradient">Speed of Thought</span>
+              {au.headline || 'Intelligence at the<br /><span className="blue-gradient">Speed of Thought</span>'}
             </h2>
             <div className="space-y-4 text-white/60 text-sm leading-relaxed">
-              <p>
-                INERA Software Private Limited is a modern technology company focused on building intelligent software systems, enterprise applications, automation platforms, and digital transformation solutions.
-              </p>
-              <p>
-                The company specializes in scalable technology ecosystems that help organizations improve efficiency, streamline operations, and embrace intelligent digital innovation.
-              </p>
-              <p>
-                INERA combines technology, strategy, and execution to create future-ready digital systems for businesses and institutions across India and beyond.
-              </p>
+              <p>{au.aboutText || 'INERA Software Private Limited is a modern technology company focused on building intelligent software systems, enterprise applications, automation platforms, and digital transformation solutions.'}</p>
+              <p>{au.aboutText2 || 'The company specializes in scalable technology ecosystems that help organizations improve efficiency, streamline operations, and embrace intelligent digital innovation.'}</p>
+              <p>{au.aboutText3 || 'INERA combines technology, strategy, and execution to create future-ready digital systems for businesses and institutions across India and beyond.'}</p>
             </div>
             <Link to="/contact" className="mt-8 btn-primary inline-flex items-center gap-2">
               Work With Us <ArrowRight size={16} />
@@ -63,9 +61,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="font-sora font-semibold text-white">Our Mission</h3>
               </div>
-              <p className="text-white/60 text-sm leading-relaxed italic">
-                "To empower businesses through intelligent technology, scalable software systems, and innovative digital solutions."
-              </p>
+              <p className="text-white/60 text-sm leading-relaxed italic">{au.mission || '"To empower businesses through intelligent technology, scalable software systems, and innovative digital solutions."'}</p>
             </div>
             <div className="glass-dark rounded-2xl p-6 border border-neon-cyan/20">
               <div className="flex items-center gap-3 mb-3">
@@ -74,9 +70,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="font-sora font-semibold text-white">Our Vision</h3>
               </div>
-              <p className="text-white/60 text-sm leading-relaxed italic">
-                "To become a globally recognized technology company driving the future of intelligent digital transformation."
-              </p>
+              <p className="text-white/60 text-sm leading-relaxed italic">{au.vision || '"To become a globally recognized technology company driving the future of intelligent digital transformation."'}</p>
             </div>
             <div className="glass-dark rounded-2xl p-6 border border-yellow-600/20">
               <div className="flex items-center gap-3 mb-3">
@@ -86,8 +80,8 @@ export default function AboutPage() {
                 <h3 className="font-sora font-semibold text-white">INERA Software Pvt. Ltd.</h3>
               </div>
               <div className="flex gap-4 text-xs text-white/50">
-                <span>📍 Raichur, Karnataka</span>
-                <span>🏢 Offices: BLR, Pune, Belgavi</span>
+                <span>📍 {au.location || 'Belagavi, Karnataka'}</span>
+                <span>🏢 Offices: {au.offices || 'Bangalore, Pune, Belagavi'}</span>
               </div>
             </div>
           </div>
@@ -128,11 +122,11 @@ export default function AboutPage() {
               <div className="w-6 h-px bg-yellow-600" /> Founder Message <div className="w-6 h-px bg-yellow-600" />
             </div>
             <blockquote className="font-sora text-xl md:text-2xl text-white/90 font-medium italic leading-relaxed mb-6">
-              "We built INERA Software with one conviction — technology should not just support business, it should intelligently drive it. Our mission is to build systems that think, adapt, and execute at the speed of modern business."
+              &ldquo;{(au.founderMessage || 'We built INERA Software with one conviction — technology should not just support business, it should intelligently drive it. Our mission is to build systems that think, adapt, and execute at the speed of modern business.')}&rdquo;
             </blockquote>
             <div className="text-white/50 text-sm">
-              <div className="font-semibold text-white">Founder & CEO</div>
-              <div className="text-xs text-white/40 mt-1">INERA SOFTWARE PRIVATE LIMITED</div>
+              <div className="font-semibold text-white">{au.founderName || 'Founder & CEO'}</div>
+              <div className="text-xs text-white/40 mt-1">{au.founderTitle || 'INERA SOFTWARE PRIVATE LIMITED'}</div>
             </div>
           </div>
         </div>

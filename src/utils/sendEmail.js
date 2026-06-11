@@ -71,9 +71,15 @@ Sent from INERA Website — ${new Date().toLocaleString('en-IN')}
 }
 
 export function buildSOIStudentBody(form) {
+  const isStudent = form.userType === 'college_student';
+  const userTypeLabel = isStudent ? 'College Student' : 'Working Professional';
+  const durationLabel = form.duration || '—';
+  const amount = form.duration === '4 Months' ? 4500 : form.duration === '3 Months' ? 3500 : 0;
   return `
 SOI STUDENT REGISTRATION — SCHOOL OF INTERNSHIPS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+USER TYPE: ${userTypeLabel}
 
 PERSONAL DETAILS
 Name         : ${form.fullName || '—'}
@@ -83,17 +89,27 @@ Mobile       : ${form.mobile || '—'}
 WhatsApp     : ${form.whatsapp || form.mobile || '—'}
 Email        : ${form.email || '—'}
 
-ACADEMIC DETAILS
+${isStudent ? `ACADEMIC DETAILS
 College      : ${form.college || '—'}
 Department   : ${form.department || '—'}
 Semester     : ${form.semester || '—'}
-Roll Number  : ${form.rollNumber || '—'}
-Skills       : ${form.skills || '—'}
+Roll Number  : ${form.rollNumber || '—'}` : `PROFESSIONAL DETAILS
+Job Role     : ${form.jobRole || '—'}
+Experience   : ${form.yearsOfExperience || '—'}`}
 
-INTERNSHIP PREFERENCES
-Track        : ${form.track || '—'}
-Duration     : ${form.duration || '—'}
-Timing       : ${form.timing || '—'}
+INTERNSHIP DETAILS
+Duration     : ${durationLabel}
+Fee Amount   : ₹${amount}
+
+PAYMENT INFO
+Payment ID   : ${form.paymentId || '—'}
+Receipt URL  : ${form.receiptUrl || '—'}
+Order ID     : ${form.orderId || '—'}
+
+AGREEMENTS ACCEPTED
+Terms & Conditions     : ${form.termsAccepted ? '✓ Yes' : '✗ No'}
+NDA                    : ${form.ndaAccepted ? '✓ Yes' : '✗ No'}
+Privacy Policy         : ${form.privacyAccepted ? '✓ Yes' : '✗ No'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Sent from INERA SOI Website — ${new Date().toLocaleString('en-IN')}
@@ -101,39 +117,43 @@ Sent from INERA SOI Website — ${new Date().toLocaleString('en-IN')}
 }
 
 export function buildSOICollegeBody(form) {
+  const institutionType = form.institutionType === 'Other' ? form.otherType : form.institutionType;
+  const feePerStudent = form.duration === '4 Months' ? 3500 : form.duration === '3 Months' ? 2500 : 0;
+  const totalAmount = (parseInt(form.numStudents) || 0) * feePerStudent;
   return `
 SOI INSTITUTIONAL REGISTRATION — SCHOOL OF INTERNSHIPS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 INSTITUTION INFO
 College Name     : ${form.collegeName || '—'}
-Type             : ${form.institutionType || '—'}
+Type             : ${institutionType || '—'}
 University       : ${form.university || '—'}
 AICTE No.        : ${form.aicte || '—'}
-NAAC Grade       : ${form.naac || '—'}
 Website          : ${form.website || '—'}
 Address          : ${form.address || '—'}, ${form.city || '—'}, ${form.state || '—'} - ${form.pin || '—'}
 Official Email   : ${form.officialEmail || '—'}
 Landline         : ${form.landline || '—'}
 
-PRINCIPAL DETAILS
-Name             : ${form.principalName || '—'}
-Designation      : ${form.principalDesignation || '—'}
-Mobile           : ${form.principalMobile || '—'}
-Email            : ${form.principalEmail || '—'}
-
-PLACEMENT OFFICER
-Name             : ${form.placementName || '—'}
-Designation      : ${form.placementDesignation || '—'}
-WhatsApp         : ${form.placementWhatsapp || '—'}
-Email            : ${form.placementEmail || '—'}
+PERSON FILLING THE FORM
+Name             : ${form.personName || '—'}
+Designation      : ${form.personDesignation || '—'}
+Mobile           : ${form.personMobile || '—'}
+Email            : ${form.personEmail || '—'}
 
 INTERNSHIP REQUIREMENTS
 No. of Students  : ${form.numStudents || '—'}
 Departments      : ${form.departments || '—'}
 Duration         : ${form.duration || '—'}
-Start Date       : ${form.startDate || '—'}
+Fee per Student  : ₹${feePerStudent}
+Total Fee        : ₹${totalAmount}
 Requirements     : ${form.requirements || '—'}
+
+PAYMENT INFO
+Payment ID       : ${form.paymentId || '—'}
+Receipt URL      : ${form.receiptUrl || '—'}
+Order ID         : ${form.orderId || '—'}
+
+AUTHORIZED        : ${form.authorized ? '✓ Yes' : '✗ No'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Sent from INERA SOI Website — ${new Date().toLocaleString('en-IN')}

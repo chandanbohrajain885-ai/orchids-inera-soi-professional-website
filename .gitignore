@@ -2,5 +2,7 @@ node_modules/
 dist/
 .DS_Store
 *.local
+.cloud-data.json
 # .env # Removed by Orchids to allow .env files
 # .env.local # Removed by Orchids to allow .env files
+.vercel
