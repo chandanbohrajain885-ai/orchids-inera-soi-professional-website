@@ -13,6 +13,7 @@ const tabs = [
   { id: 'social',      label: 'Social Links',      icon: Link2 },
   { id: 'contact',     label: 'Contact Info',      icon: Phone },
   { id: 'announcements', label: 'Announcements',   icon: Megaphone },
+  { id: 'newsticker',   label: 'News Ticker',       icon: Megaphone },
   { id: 'highlights',  label: 'Highlights',        icon: Star },
   { id: 'stats',       label: 'Stats',             icon: BarChart3 },
   { id: 'careers',     label: 'Careers',           icon: Briefcase },
@@ -166,6 +167,14 @@ const [certSearch,    setCertSearch]    = useState('');
   const updateAnnText = (id, text) => setAnnState(p => p.map(a => a.id === id ? { ...a, text } : a));
   const saveAnn = () => { updateData('announcements', annState); flag('ann'); };
 
+  // ── News Ticker (fixed bottom bar) CRUD — same pattern as Announcements ─────
+  const [tickerState, setTickerState] = useState(() => [...(data.newsTicker || [])]);
+  const addTicker = () => setTickerState(p => [...p, { id: Date.now(), text: '', active: true }]);
+  const removeTicker = (id) => setTickerState(p => p.filter(t => t.id !== id));
+  const toggleTicker = (id) => setTickerState(p => p.map(t => t.id === id ? { ...t, active: !t.active } : t));
+  const updateTickerText = (id, text) => setTickerState(p => p.map(t => t.id === id ? { ...t, text } : t));
+  const saveTicker = () => { updateData('newsTicker', tickerState); flag('ticker'); };
+
   // ── Highlights ──────────────────────────────────────────────────────────────
   const addHighlight = () => setHighState(p => [...p, { id: Date.now(), title: '', description: '', tag: 'News', active: true }]);
   const removeHighlight = (id) => setHighState(p => p.filter(h => h.id !== id));
@@ -189,6 +198,39 @@ const [certSearch,    setCertSearch]    = useState('');
 
   // ── SOI ─────────────────────────────────────────────────────────────────────
   const saveSoi = () => { updateData('soi', soiState); flag('soi'); };
+
+  const [soiLogoUploading, setSoiLogoUploading] = useState(false);
+  const handleSoiLogoUpload = (file) => {
+    if (!file) return;
+    setSoiLogoUploading(true);
+    compressImage(file, async (compressed) => {
+      try {
+        if (isSupabaseReady()) {
+          const blob = await (await fetch(compressed)).blob();
+          const path = `branding/soi-logo-${Date.now()}.jpg`;
+          const { error: upErr } = await supabase.storage
+            .from('gallery-images')
+            .upload(path, blob, { upsert: true, contentType: blob.type });
+          if (!upErr) {
+            const { data: urlData } = supabase.storage.from('gallery-images').getPublicUrl(path);
+            if (urlData?.publicUrl) {
+              setSoiState(p => ({ ...p, logo: urlData.publicUrl }));
+              updateData('soi', { ...soiState, logo: urlData.publicUrl });
+              setSoiLogoUploading(false);
+              return;
+            }
+          }
+        }
+        setSoiState(p => ({ ...p, logo: compressed }));
+        updateData('soi', { ...soiState, logo: compressed });
+      } catch (e) {
+        console.warn('SOI logo upload failed:', e);
+        setSoiState(p => ({ ...p, logo: compressed }));
+      } finally {
+        setSoiLogoUploading(false);
+      }
+    });
+  };
 
   // ── About Us ────────────────────────────────────────────────────────────────
   const [aboutUsState, setAboutUsState] = useState(() => ({ ...(data.aboutUs || {}) }));
@@ -592,6 +634,32 @@ const [certSearch,    setCertSearch]    = useState('');
           </Section>
         );
 
+      case 'newsticker':
+        return (
+          <Section title="News Ticker — Fixed Bottom Bar" sub="This scrolling bar stays fixed at the bottom of the screen on every page while visitors scroll. Toggle items on/off, edit, add, or remove. Leave all items off (or delete all) to hide the bar entirely.">
+            <div className="space-y-3 mb-4">
+              {tickerState.map(t => (
+                <div key={t.id} className="flex items-center gap-3 p-3 bg-white/3 rounded-xl border border-white/5">
+                  <button onClick={() => toggleTicker(t.id)} className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${t.active ? 'bg-green-600/30 text-green-400' : 'bg-white/5 text-white/30'}`}>
+                    {t.active ? <Check size={14} /> : <X size={14} />}
+                  </button>
+                  <input className="flex-1 bg-transparent text-white text-sm focus:outline-none placeholder-white/30 min-w-0" value={t.text} onChange={e => updateTickerText(t.id, e.target.value)} placeholder="News ticker text..." />
+                  <button onClick={() => removeTicker(t.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center flex-shrink-0">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+              {tickerState.length === 0 && (
+                <div className="text-center py-8 text-white/30 text-sm">No news ticker items yet. Add one below.</div>
+              )}
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={addTicker} className="btn-secondary text-sm flex items-center gap-2"><Plus size={14} /> Add</button>
+              <SaveBtn onClick={saveTicker} saved={saved.ticker} />
+            </div>
+          </Section>
+        );
+
       case 'highlights':
         return (
           <Section title="Homepage Highlights" sub="Cards shown on the homepage. Toggle visibility, edit, add or remove.">
@@ -688,6 +756,29 @@ const [certSearch,    setCertSearch]    = useState('');
             <div className="space-y-4">
               <div><label className={lCls}>Tagline</label><input className={iCls} value={soiState.tagline} onChange={e => setSoiState(p => ({ ...p, tagline: e.target.value }))} /></div>
               <div><label className={lCls}>Main Headline</label><input className={iCls} value={soiState.headline} onChange={e => setSoiState(p => ({ ...p, headline: e.target.value }))} /></div>
+              <div>
+                <label className={lCls}>SOI Logo</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center border border-white/10">
+                    {soiState.logo ? (
+                      <img src={soiState.logo} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white/30 text-[10px]">No logo</span>
+                    )}
+                  </div>
+                  <input className={iCls} value={soiState.logo || ''} onChange={e => setSoiState(p => ({ ...p, logo: e.target.value }))} placeholder="/soi-logo.jpg or upload →" />
+                  <label className={`btn-secondary text-xs flex items-center gap-1.5 px-3 py-2.5 whitespace-nowrap cursor-pointer flex-shrink-0 ${soiLogoUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <Upload size={13} /> {soiLogoUploading ? 'Uploading…' : 'Upload'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => { e.target.files[0] && handleSoiLogoUpload(e.target.files[0]); e.target.value = ''; }}
+                    />
+                  </label>
+                </div>
+                <p className="text-white/25 text-[10px] mt-1">This logo shows on the homepage SOI banner and the top of the SOI page. Upload goes live immediately.</p>
+              </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div><label className={lCls}>Fee Per Student</label><input className={iCls} value={soiState.feePerStudent} onChange={e => setSoiState(p => ({ ...p, feePerStudent: e.target.value }))} /></div>
                 <div><label className={lCls}>Minimum Students</label><input type="number" className={iCls} value={soiState.minStudents} onChange={e => setSoiState(p => ({ ...p, minStudents: parseInt(e.target.value) || 100 }))} /></div>
