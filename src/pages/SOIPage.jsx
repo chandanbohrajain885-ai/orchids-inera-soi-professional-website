@@ -838,7 +838,7 @@ export default function SOIPage() {
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           <div className="flex justify-center mb-8">
             <div className="w-28 h-28 rounded-2xl overflow-hidden ring-2 ring-yellow-600/40 shadow-xl shadow-yellow-900/20 animate-float">
-              <img src="/soi-logo.jpg" alt="SOI" className="w-full h-full object-cover" />
+              <img src={data.soi.logo || '/soi-logo.jpg'} alt="SOI" className="w-full h-full object-cover" />
             </div>
           </div>
           <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6 border border-yellow-600/20">
