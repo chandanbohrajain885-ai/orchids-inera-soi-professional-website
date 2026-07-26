@@ -55,12 +55,12 @@ const institutionBenefits = [
 
 // ── Agreement Texts ──────────────────────────────────────────────────────────
 
-const TERMS_TEXT = `INERA SOFTWARE PRIVATE LIMITED — SCHOOL OF INTERNSHIPS (SOI)
+const TERMS_TEXT = `INERA SOFTWARE PRIVATE LIMITED — SCHOOL OF INTELLIGENCE (SOI)
 
 TERMS AND CONDITIONS FOR INTERNSHIP PROGRAM
 
 1. PROGRAM OVERVIEW
-The School of Internships (SOI) is an initiative of INERA SOFTWARE PRIVATE LIMITED designed to provide practical, execution-focused learning experiences to students and working professionals.
+The School of Intelligence (SOI) is an initiative of INERA SOFTWARE PRIVATE LIMITED designed to provide practical, execution-focused learning experiences to students and working professionals.
 
 2. ELIGIBILITY
 Applicants must be at least 18 years of age and currently enrolled in a recognized educational institution (for student track) or employed (for working professional track).
@@ -89,7 +89,7 @@ INERA SOFTWARE PRIVATE LIMITED shall not be liable for any indirect, incidental,
 10. MODIFICATION
 INERA SOFTWARE PRIVATE LIMITED reserves the right to modify these terms and conditions at any time. Participants will be notified of any material changes.`;
 
-const NDA_TEXT = `INERA SOFTWARE PRIVATE LIMITED — SCHOOL OF INTERNSHIPS (SOI)
+const NDA_TEXT = `INERA SOFTWARE PRIVATE LIMITED — SCHOOL OF INTELLIGENCE (SOI)
 
 NON-DISCLOSURE AND CONFIDENTIALITY AGREEMENT
 
@@ -266,7 +266,7 @@ function generateStudentReceipt(form, paymentInfo) {
   </div>
   <div class="section">
     <h3>Program Details</h3>
-    <div class="row"><span class="label">Program</span><span>SOI — School of Internships</span></div>
+    <div class="row"><span class="label">Program</span><span>SOI — School of Intelligence</span></div>
     <div class="row"><span class="label">Duration</span><span>${form.duration}</span></div>
   </div>
   <div class="section">
@@ -334,7 +334,7 @@ function generateCollegeReceipt(form, paymentInfo) {
   </div>
   <div class="section">
     <h3>Program Details</h3>
-    <div class="row"><span class="label">Program</span><span>SOI — School of Internships (Institutional)</span></div>
+    <div class="row"><span class="label">Program</span><span>SOI — School of Intelligence (Institutional)</span></div>
     <div class="row"><span class="label">Duration</span><span>${form.duration}</span></div>
     <div class="row"><span class="label">Number of Students</span><span>${form.numStudents}</span></div>
     <div class="row"><span class="label">Fee per Student</span><span>₹${(parseInt(form.numStudents) > 0 ? (paymentInfo.amount / parseInt(form.numStudents)) : 0)?.toLocaleString('en-IN')}</span></div>
@@ -844,7 +844,7 @@ export default function SOIPage() {
           <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-6 border border-yellow-600/20">
             <span className="text-yellow-400 text-xs font-medium uppercase tracking-widest">A Program of INERA Software Pvt. Ltd.</span>
           </div>
-          <h1 className="font-sora text-4xl md:text-6xl font-bold text-white mb-3">SOI — School of Internships</h1>
+          <h1 className="font-sora text-4xl md:text-6xl font-bold text-white mb-3">SOI — School of Intelligence</h1>
           <p className="text-yellow-400 text-xl md:text-2xl font-sora font-semibold mb-4">"Learn. Build. Deploy."</p>
           <p className="text-white/50 text-sm italic mb-8">"Driven by Ambition, Defined by Execution"</p>
           <h2 className="font-sora text-2xl md:text-3xl font-bold text-white mb-4">Build Real Skills Through Real Execution</h2>
@@ -874,7 +874,7 @@ export default function SOIPage() {
             </div>
             <h2 className="font-sora text-3xl md:text-4xl font-bold text-white mb-6">What is SOI?</h2>
             <div className="space-y-4 text-white/60 text-sm leading-relaxed">
-              <p>SOI (School of Internships) is the professional internship ecosystem powered by INERA SOFTWARE PRIVATE LIMITED.</p>
+              <p>SOI (School of Intelligence) is the professional internship ecosystem powered by INERA SOFTWARE PRIVATE LIMITED.</p>
               <p>SOI bridges the gap between academic learning and real industry execution through practical exposure, modern technology environments, and execution-focused learning.</p>
               <p className="font-semibold text-white/80">SOI is not a traditional classroom-style internship. It is a Learn + Work ecosystem where students:</p>
             </div>
