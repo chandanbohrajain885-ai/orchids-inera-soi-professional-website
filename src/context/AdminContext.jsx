@@ -25,7 +25,7 @@ const defaultData = {
     { id: 3, text: 'Institutional Partnerships Available – Min. 100 Students', active: true },
   ],
   highlights: [
-    { id: 1, title: 'SOI Batch Launch', description: 'New batch of School of Internships launched with 200+ students.', tag: 'Achievement', active: true },
+    { id: 1, title: 'SOI Batch Launch', description: 'New batch of School of Intelligence launched with 200+ students.', tag: 'Achievement', active: true },
     { id: 2, title: 'Enterprise Partnership', description: 'Strategic technology partnership signed with leading institutions.', tag: 'News', active: true },
     { id: 3, title: 'AI Development Sprint', description: 'Team completed 3 AI automation projects in record time.', tag: 'Milestone', active: true },
     { id: 4, title: 'New Office – Bangalore', description: 'INERA Software expands to Bangalore with new tech hub.', tag: 'Expansion', active: true },
@@ -34,7 +34,7 @@ const defaultData = {
     { id: 1, title: 'Full Stack Developer', department: 'Engineering', type: 'Full-time', location: 'Remote / Bangalore', description: 'Build scalable web applications and enterprise software solutions.', active: true },
     { id: 2, title: 'AI Engineer', department: 'AI & Automation', type: 'Full-time', location: 'Remote / Bangalore', description: 'Design and develop intelligent automation workflows and AI systems.', active: true },
     { id: 3, title: 'Business Development Executive', department: 'Sales', type: 'Full-time', location: 'Pan-India', description: 'Drive business growth and enterprise client acquisition.', active: true },
-    { id: 4, title: 'SOI Program Coordinator', department: 'SOI', type: 'Full-time', location: 'Remote', description: 'Manage and coordinate the School of Internships program.', active: true },
+    { id: 4, title: 'SOI Program Coordinator', department: 'SOI', type: 'Full-time', location: 'Remote', description: 'Manage and coordinate the School of Intelligence program.', active: true },
     { id: 5, title: 'UI/UX Designer', department: 'Design', type: 'Full-time', location: 'Remote', description: 'Create stunning enterprise-grade UI designs and user experiences.', active: false },
   ],
   soi: {
@@ -61,8 +61,11 @@ const defaultData = {
   },
   pillars: [
     { id: 1, name: 'Chandan Bohra Jain', designation: 'Founder & CEO', image: '/pillar-chandan.jpg', quote: "Innovation begins when vision meets fearless execution. At InEra, we don't just adapt to the future — we engineer it.", contactEmail: 'chandan.inera@gmail.com', linkedin: 'https://linkedin.com/in/chandan-bohra-jain', colorScheme: 'blue', whiteBg: false },
-{ id: 2, name: 'Sarvesh [Full Name]', designation: 'Co-Founder', image: '/pillar-sarvesh.jpg', quote: 'Strong systems are built through trust, discipline, and purpose. Every challenge is an opportunity to create something extraordinary.', contactEmail: '', linkedin: 'https://linkedin.com/in/sarvesh-lastname', colorScheme: 'purple', whiteBg: false },    { id: 4, name: 'Kumar Abhinav', designation: 'Lead Head of SOI Department', image: '/pillar-kumar.jpg', quote: 'Learning becomes powerful when ideas turn into real execution. SOI is built to shape thinkers into future-ready innovators.', contactEmail: 'kumar.soi@gmail.com', linkedin: 'https://linkedin.com/in/kumar-abhinav', colorScheme: 'yellow', whiteBg: false },
+    { id: 2, name: 'Yallappa Belavanaki', designation: 'Co-Founder', image: '/pillar-yallappa.jpg', quote: 'Strong systems are built through trust, discipline, and purpose. Every challenge is an opportunity to create something extraordinary.', contactEmail: '', linkedin: 'https://linkedin.com/in/yallappa-belavanaki', colorScheme: 'purple', whiteBg: false },
+    { id: 3, name: 'Shivani Satish Navadgi', designation: 'Chief Marketing Officer', image: '/pillar-shivani.png', quote: 'Brands grow when people truly connect with a vision. Marketing is not promotion — it is building meaningful impact.', contactEmail: 'shivani.inera@gmail.com', linkedin: 'https://linkedin.com/in/shivani-navadgi', colorScheme: 'pink', whiteBg: true },
+    { id: 4, name: 'Kumar Abhinav', designation: 'Lead Head of SOI Department', image: '/pillar-kumar.jpg', quote: 'Learning becomes powerful when ideas turn into real execution. SOI is built to shape thinkers into future-ready innovators.', contactEmail: 'kumar.soi@gmail.com', linkedin: 'https://linkedin.com/in/kumar-abhinav', colorScheme: 'yellow', whiteBg: false },
   ],
+  soiPillars: [],
   clientReviews: [
     { id: 1, name: 'Rajesh Malhotra', role: 'CTO, FinBridge Technologies', location: 'Bangalore', avatar: 'RM', color: 'from-blue-600 to-blue-800', rating: 5, text: 'INERA Software delivered our enterprise platform in record time. Their AI automation module reduced our operational overhead by 40%. The team is genuinely brilliant — they understood our business needs before we could even fully articulate them. Truly a technology partner, not just a vendor.', active: true },
     { id: 2, name: 'Priya Venkataraman', role: 'Director of Operations, EduPulse India', location: 'Pune', avatar: 'PV', color: 'from-purple-600 to-purple-800', rating: 5, text: "We hired INERA for a custom student management platform. What impressed us most was their attention to detail and the quality of the final product. It's professional, fast, and our staff adopted it immediately. Communication throughout the project was transparent and responsive.", active: true },
