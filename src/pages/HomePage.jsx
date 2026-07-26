@@ -228,7 +228,7 @@ export default function HomePage() {
           <div className="glass-dark rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-2xl overflow-hidden ring-2 ring-yellow-600/30 shadow-xl shadow-yellow-900/20 animate-float">
-                <img src="/soi-logo.jpg" alt="SOI Logo" className="w-full h-full object-cover" />
+                <img src={data.soi.logo || '/soi-logo.jpg'} alt="SOI Logo" className="w-full h-full object-cover" />
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
