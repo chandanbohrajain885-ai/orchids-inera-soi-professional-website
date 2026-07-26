@@ -76,7 +76,7 @@ export function buildSOIStudentBody(form) {
   const durationLabel = form.duration || '—';
   const amount = form.duration === '4 Months' ? 4500 : form.duration === '3 Months' ? 3500 : 0;
   return `
-SOI STUDENT REGISTRATION — SCHOOL OF INTERNSHIPS
+SOI STUDENT REGISTRATION — SCHOOL OF INTELLIGENCE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 USER TYPE: ${userTypeLabel}
@@ -121,7 +121,7 @@ export function buildSOICollegeBody(form) {
   const feePerStudent = form.duration === '4 Months' ? 3500 : form.duration === '3 Months' ? 2500 : 0;
   const totalAmount = (parseInt(form.numStudents) || 0) * feePerStudent;
   return `
-SOI INSTITUTIONAL REGISTRATION — SCHOOL OF INTERNSHIPS
+SOI INSTITUTIONAL REGISTRATION — SCHOOL OF INTELLIGENCE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 INSTITUTION INFO
