@@ -4,6 +4,7 @@ import { AdminProvider } from './context/AdminContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
+import NewsTicker from './components/NewsTicker';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import ServicesPage from './pages/ServicesPage';
@@ -33,6 +34,7 @@ function Layout({ children }) {
       <main>{children}</main>
       {!isAdmin && <Footer />}
       {!isAdmin && <WhatsAppButton />}
+      {!isAdmin && <NewsTicker />}
     </>
   );
 }
