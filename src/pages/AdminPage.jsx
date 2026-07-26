@@ -19,6 +19,7 @@ const tabs = [
   { id: 'soi',         label: 'SOI Settings',      icon: GraduationCap },
   { id: 'aboutus',     label: 'About Us',          icon: FileText },
   { id: 'pillars',     label: 'Core Pillars',      icon: Users },
+  { id: 'soipillars',  label: 'SOI Founding Team', icon: GraduationCap },
   { id: 'gallery',     label: 'Gallery',           icon: Image },
   { id: 'clientreviews', label: 'Client Reviews',  icon: MessageSquare },
   { id: 'studentreviews', label: 'Student Reviews', icon: MessageSquare },
@@ -241,6 +242,54 @@ const [certSearch,    setCertSearch]    = useState('');
         updatePillar(id, 'image', compressed);
       } finally {
         setPillarUploading(p => ({ ...p, [id]: false }));
+      }
+    });
+  };
+
+  // ── SOI Founding Team CRUD (same pattern as Core Pillars, separate data key) ─
+  const [soiPillarsState, setSoiPillarsState] = useState(() => JSON.parse(JSON.stringify(data.soiPillars || [])));
+  const addSoiPillar = () => setSoiPillarsState(p => [...p, {
+    id: Date.now(),
+    name: '',
+    designation: '',
+    image: '',
+    quote: '',
+    contactEmail: '',
+    linkedin: '',
+    colorScheme: PILLAR_COLORS[p.length % PILLAR_COLORS.length],
+    whiteBg: false,
+  }]);
+  const removeSoiPillar = (id) => setSoiPillarsState(p => p.filter(x => x.id !== id));
+  const updateSoiPillar = (id, field, val) => setSoiPillarsState(p => p.map(x => x.id === id ? { ...x, [field]: val } : x));
+  const saveSoiPillars = () => { updateData('soiPillars', soiPillarsState); flag('soipillars'); };
+
+  const [soiPillarUploading, setSoiPillarUploading] = useState({});
+  const handleSoiPillarPhotoUpload = (id, file) => {
+    if (!file) return;
+    setSoiPillarUploading(p => ({ ...p, [id]: true }));
+    compressImage(file, async (compressed) => {
+      try {
+        if (isSupabaseReady()) {
+          const blob = await (await fetch(compressed)).blob();
+          const path = `soi-pillars/${id}-${Date.now()}.jpg`;
+          const { error: upErr } = await supabase.storage
+            .from('gallery-images')
+            .upload(path, blob, { upsert: true, contentType: blob.type });
+          if (!upErr) {
+            const { data: urlData } = supabase.storage.from('gallery-images').getPublicUrl(path);
+            if (urlData?.publicUrl) {
+              updateSoiPillar(id, 'image', urlData.publicUrl);
+              setSoiPillarUploading(p => ({ ...p, [id]: false }));
+              return;
+            }
+          }
+        }
+        updateSoiPillar(id, 'image', compressed);
+      } catch (e) {
+        console.warn('SOI pillar photo upload failed:', e);
+        updateSoiPillar(id, 'image', compressed);
+      } finally {
+        setSoiPillarUploading(p => ({ ...p, [id]: false }));
       }
     });
   };
@@ -758,6 +807,86 @@ const [certSearch,    setCertSearch]    = useState('');
             <div className="flex gap-3 flex-wrap">
               <button onClick={addPillar} className="btn-secondary text-sm flex items-center gap-2"><Plus size={14} /> Add Member</button>
               <SaveBtn onClick={savePillars} saved={saved.pillars} />
+            </div>
+          </Section>
+        );
+      }
+      case 'soipillars': {
+        return (
+          <Section title="SOI Founding Team — School of Intelligence" sub="Add, edit, or remove founding team cards shown below Core Pillars on the homepage. Control name, role, quote, photo, LinkedIn, and color theme.">
+            <div className="space-y-5 mb-4">
+              {soiPillarsState.map(p => (
+                <div key={p.id} className="p-4 bg-white/3 rounded-xl border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center text-xs font-bold text-yellow-400 flex-shrink-0">
+                        {p.name ? p.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}
+                      </div>
+                      <span className="text-white/60 text-sm font-medium truncate">{p.name || 'New Member'}</span>
+                    </div>
+                    <button onClick={() => removeSoiPillar(p.id)} className="w-7 h-7 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 flex items-center justify-center flex-shrink-0">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div><label className={lCls}>Full Name</label><input className={iCls} value={p.name} onChange={e => updateSoiPillar(p.id, 'name', e.target.value)} placeholder="e.g. Kumar Abhinav" /></div>
+                    <div><label className={lCls}>Designation / Role</label><input className={iCls} value={p.designation} onChange={e => updateSoiPillar(p.id, 'designation', e.target.value)} placeholder="e.g. Founding Head — SOI" /></div>
+                    <div><label className={lCls}>Contact Email</label><input className={iCls} value={p.contactEmail} onChange={e => updateSoiPillar(p.id, 'contactEmail', e.target.value)} placeholder="name@gmail.com (leave blank to hide)" /></div>
+                    <div><label className={lCls}>LinkedIn URL</label><input className={iCls} value={p.linkedin} onChange={e => updateSoiPillar(p.id, 'linkedin', e.target.value)} placeholder="https://linkedin.com/in/username" /></div>
+                    <div>
+                      <label className={lCls}>Photo</label>
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center border border-white/10">
+                          {p.image ? (
+                            <img src={p.image} alt="" className="w-full h-full object-cover object-top" />
+                          ) : (
+                            <span className="text-white/30 text-[10px]">No photo</span>
+                          )}
+                        </div>
+                        <input className={iCls} value={p.image} onChange={e => updateSoiPillar(p.id, 'image', e.target.value)} placeholder="/photo.jpg or upload →" />
+                        <label className={`btn-secondary text-xs flex items-center gap-1.5 px-3 py-2.5 whitespace-nowrap cursor-pointer flex-shrink-0 ${soiPillarUploading[p.id] ? 'opacity-50 pointer-events-none' : ''}`}>
+                          <Upload size={13} /> {soiPillarUploading[p.id] ? 'Uploading…' : 'Upload'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => { e.target.files[0] && handleSoiPillarPhotoUpload(p.id, e.target.files[0]); e.target.value = ''; }}
+                          />
+                        </label>
+                      </div>
+                      <p className="text-white/25 text-[10px] mt-1">Upload goes live immediately — no need to hit Save for the photo itself.</p>
+                    </div>
+                    <div>
+                      <label className={lCls}>Card Color Theme</label>
+                      <select className={`${iCls} bg-[#0d1117] appearance-none capitalize`} value={p.colorScheme} onChange={e => updateSoiPillar(p.id, 'colorScheme', e.target.value)}>
+                        {['blue','purple','pink','yellow','cyan','green','orange','red'].map(c => (
+                          <option key={c} value={c} className="capitalize">{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className={lCls}>Quote / Tagline</label>
+                    <textarea rows={2} className={iCls} value={p.quote} onChange={e => updateSoiPillar(p.id, 'quote', e.target.value)} placeholder="Their personal quote shown on the founding team card..." />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => updateSoiPillar(p.id, 'whiteBg', !p.whiteBg)}
+                      className={`text-xs px-3 py-1.5 rounded-full font-semibold border transition-colors ${p.whiteBg ? 'bg-white/15 text-white border-white/30' : 'bg-white/5 text-white/40 border-white/10'}`}
+                    >
+                      {p.whiteBg ? '● White photo background' : '○ Dark photo background'}
+                    </button>
+                    <span className="text-white/30 text-[10px]">Use white bg if photo has a white/light background</span>
+                  </div>
+                </div>
+              ))}
+              {soiPillarsState.length === 0 && (
+                <div className="text-center py-8 text-white/30 text-sm">No SOI founding team members yet. Add the first one below.</div>
+              )}
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={addSoiPillar} className="btn-secondary text-sm flex items-center gap-2"><Plus size={14} /> Add Member</button>
+              <SaveBtn onClick={saveSoiPillars} saved={saved.soipillars} />
             </div>
           </Section>
         );
