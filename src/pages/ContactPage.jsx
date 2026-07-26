@@ -205,7 +205,7 @@ export default function ContactPage() {
 
             {/* SOI Contact */}
             <div className="glass rounded-2xl p-5 border border-yellow-600/20">
-              <div className="text-yellow-400/80 text-xs uppercase tracking-wide mb-2">SOI — School of Internships</div>
+              <div className="text-yellow-400/80 text-xs uppercase tracking-wide mb-2">SOI — School of Intelligence</div>
               <a href="mailto:ineraschoolofinternships@gmail.com" className="text-white hover:text-yellow-400 transition-colors text-sm font-medium">
                 ineraschoolofinternships@gmail.com
               </a>
