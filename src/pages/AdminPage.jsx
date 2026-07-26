@@ -252,11 +252,13 @@ const [certSearch,    setCertSearch]    = useState('');
     id: Date.now(),
     name: '',
     designation: '',
+    designation2: '',
     image: '',
     quote: '',
     contactEmail: '',
     linkedin: '',
     colorScheme: PILLAR_COLORS[p.length % PILLAR_COLORS.length],
+    colorScheme2: PILLAR_COLORS[(p.length + 1) % PILLAR_COLORS.length],
     whiteBg: false,
   }]);
   const removeSoiPillar = (id) => setSoiPillarsState(p => p.filter(x => x.id !== id));
@@ -831,6 +833,10 @@ const [certSearch,    setCertSearch]    = useState('');
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div><label className={lCls}>Full Name</label><input className={iCls} value={p.name} onChange={e => updateSoiPillar(p.id, 'name', e.target.value)} placeholder="e.g. Kumar Abhinav" /></div>
                     <div><label className={lCls}>Designation / Role</label><input className={iCls} value={p.designation} onChange={e => updateSoiPillar(p.id, 'designation', e.target.value)} placeholder="e.g. Founding Head — SOI" /></div>
+                    <div>
+                      <label className={lCls}>Second Designation (optional)</label>
+                      <input className={iCls} value={p.designation2 || ''} onChange={e => updateSoiPillar(p.id, 'designation2', e.target.value)} placeholder="e.g. AI Curriculum Lead" />
+                    </div>
                     <div><label className={lCls}>Contact Email</label><input className={iCls} value={p.contactEmail} onChange={e => updateSoiPillar(p.id, 'contactEmail', e.target.value)} placeholder="name@gmail.com (leave blank to hide)" /></div>
                     <div><label className={lCls}>LinkedIn URL</label><input className={iCls} value={p.linkedin} onChange={e => updateSoiPillar(p.id, 'linkedin', e.target.value)} placeholder="https://linkedin.com/in/username" /></div>
                     <div>
@@ -857,8 +863,16 @@ const [certSearch,    setCertSearch]    = useState('');
                       <p className="text-white/25 text-[10px] mt-1">Upload goes live immediately — no need to hit Save for the photo itself.</p>
                     </div>
                     <div>
-                      <label className={lCls}>Card Color Theme</label>
+                      <label className={lCls}>Card Color Theme (1st Badge)</label>
                       <select className={`${iCls} bg-[#0d1117] appearance-none capitalize`} value={p.colorScheme} onChange={e => updateSoiPillar(p.id, 'colorScheme', e.target.value)}>
+                        {['blue','purple','pink','yellow','cyan','green','orange','red'].map(c => (
+                          <option key={c} value={c} className="capitalize">{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={lCls}>2nd Badge Color (only used if Second Designation is filled)</label>
+                      <select className={`${iCls} bg-[#0d1117] appearance-none capitalize`} value={p.colorScheme2 || 'blue'} onChange={e => updateSoiPillar(p.id, 'colorScheme2', e.target.value)}>
                         {['blue','purple','pink','yellow','cyan','green','orange','red'].map(c => (
                           <option key={c} value={c} className="capitalize">{c.charAt(0).toUpperCase() + c.slice(1)}</option>
                         ))}
