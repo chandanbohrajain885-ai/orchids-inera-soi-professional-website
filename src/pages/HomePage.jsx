@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import CorePillars from '../components/CorePillars';
+import SOIFoundingTeam from '../components/SOIFoundingTeam';
 import ReviewsSection from '../components/ReviewsSection';
 import ContactModal from '../components/ContactModal';
 import {
@@ -231,7 +232,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <div className="text-yellow-400/80 text-xs uppercase tracking-widest mb-2">School of Internships</div>
+              <div className="text-yellow-400/80 text-xs uppercase tracking-widest mb-2">School of Intelligence</div>
               <h2 className="font-sora text-3xl md:text-4xl font-bold text-white mb-3">SOI — Learn. Build. Deploy.</h2>
               <p className="text-white/60 text-sm max-w-xl">SOI is the execution-focused internship ecosystem by INERA Software. Bridge the gap between theory and real industry experience through AI-first environments.</p>
             </div>
@@ -276,6 +277,11 @@ export default function HomePage() {
       {/* CORE PILLARS */}
       <div className="bg-gradient-to-b from-navy-blue/8 to-deep-black border-y border-white/5">
         <CorePillars />
+      </div>
+
+      {/* SOI FOUNDING TEAM */}
+      <div className="bg-gradient-to-b from-deep-black to-navy-blue/8 border-b border-white/5">
+        <SOIFoundingTeam />
       </div>
 
       {/* WHY INERA */}
