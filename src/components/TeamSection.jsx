@@ -81,12 +81,19 @@ export default function TeamSection({ members, eyebrow, accentClass = 'bg-neon-c
                 <span className="absolute bottom-0 right-[calc(50%-56px+4px)] w-4 h-4 bg-green-400 rounded-full border-2 border-deep-black shadow-lg shadow-green-400/50" />
               </div>
 
-              {/* Name & Designation */}
+              {/* Name & Designation(s) */}
               <div className="text-center mb-4">
                 <h3 className="font-sora font-bold text-white text-base leading-tight mb-2">{person.name}</h3>
-                <span className={`inline-block text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full border ${scheme.badge}`}>
-                  {person.designation}
-                </span>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  <span className={`inline-block text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full border ${scheme.badge}`}>
+                    {person.designation}
+                  </span>
+                  {person.designation2 && (
+                    <span className={`inline-block text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full border ${(COLOR_SCHEMES[person.colorScheme2] || DEFAULT_SCHEME).badge}`}>
+                      {person.designation2}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Divider */}
