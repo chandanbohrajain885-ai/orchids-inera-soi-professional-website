@@ -48,8 +48,7 @@ const defaultData = {
   },
   newsTicker: [
     { id: 1, text: 'SOI (School of Internships) has officially been renamed to SOI — School of Intelligence.', active: true },
-    { id: 2, text: 'INERA Software has signed MOUs with new partner companies.', active: true },
-    { id: 3, text: 'This update is effective from the 24th.', active: true },
+        { id: 2, text: 'This update is effective from the 24th July 2026.', active: true },
   ],
   aboutUs: {
     mission: 'To empower businesses through intelligent technology, scalable software systems, and innovative digital solutions.',
