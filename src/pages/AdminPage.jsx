@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
+import { supabase, isSupabaseReady } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Megaphone, Star, Briefcase, Link2, Users,
@@ -208,6 +209,41 @@ const [certSearch,    setCertSearch]    = useState('');
   const removePillar = (id) => setPillarsState(p => p.filter(x => x.id !== id));
   const updatePillar = (id, field, val) => setPillarsState(p => p.map(x => x.id === id ? { ...x, [field]: val } : x));
   const savePillars = () => { updateData('pillars', pillarsState); flag('pillars'); };
+
+  // Upload a pillar's photo: compress client-side, push to Supabase Storage (falls
+  // back to storing the compressed image directly if Supabase isn't configured),
+  // then drop the live URL straight into that pillar's image field.
+  const [pillarUploading, setPillarUploading] = useState({});
+  const handlePillarPhotoUpload = (id, file) => {
+    if (!file) return;
+    setPillarUploading(p => ({ ...p, [id]: true }));
+    compressImage(file, async (compressed) => {
+      try {
+        if (isSupabaseReady()) {
+          const blob = await (await fetch(compressed)).blob();
+          const path = `pillars/${id}-${Date.now()}.jpg`;
+          const { error: upErr } = await supabase.storage
+            .from('gallery-images')
+            .upload(path, blob, { upsert: true, contentType: blob.type });
+          if (!upErr) {
+            const { data: urlData } = supabase.storage.from('gallery-images').getPublicUrl(path);
+            if (urlData?.publicUrl) {
+              updatePillar(id, 'image', urlData.publicUrl);
+              setPillarUploading(p => ({ ...p, [id]: false }));
+              return;
+            }
+          }
+        }
+        // Fallback (no Supabase configured, or upload failed): store the compressed image inline
+        updatePillar(id, 'image', compressed);
+      } catch (e) {
+        console.warn('Pillar photo upload failed:', e);
+        updatePillar(id, 'image', compressed);
+      } finally {
+        setPillarUploading(p => ({ ...p, [id]: false }));
+      }
+    });
+  };
 
   // ── Gallery ─────────────────────────────────────────────────────────────────
   const addGalleryItem = () => setGalleryItems(p => [...p, { id: Date.now(), title: '', category: galleryCats[0] || '', image: '', active: true }]);
@@ -668,7 +704,29 @@ const [certSearch,    setCertSearch]    = useState('');
                     <div><label className={lCls}>Designation / Role</label><input className={iCls} value={p.designation} onChange={e => updatePillar(p.id, 'designation', e.target.value)} placeholder="e.g. Founder & CEO" /></div>
                     <div><label className={lCls}>Contact Email</label><input className={iCls} value={p.contactEmail} onChange={e => updatePillar(p.id, 'contactEmail', e.target.value)} placeholder="name@gmail.com (leave blank to hide)" /></div>
                     <div><label className={lCls}>LinkedIn URL</label><input className={iCls} value={p.linkedin} onChange={e => updatePillar(p.id, 'linkedin', e.target.value)} placeholder="https://linkedin.com/in/username" /></div>
-                    <div><label className={lCls}>Photo URL or /filename.jpg</label><input className={iCls} value={p.image} onChange={e => updatePillar(p.id, 'image', e.target.value)} placeholder="/pillar-name.jpg" /></div>
+                    <div>
+                      <label className={lCls}>Photo</label>
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center border border-white/10">
+                          {p.image ? (
+                            <img src={p.image} alt="" className="w-full h-full object-cover object-top" />
+                          ) : (
+                            <span className="text-white/30 text-[10px]">No photo</span>
+                          )}
+                        </div>
+                        <input className={iCls} value={p.image} onChange={e => updatePillar(p.id, 'image', e.target.value)} placeholder="/pillar-name.jpg or upload →" />
+                        <label className={`btn-secondary text-xs flex items-center gap-1.5 px-3 py-2.5 whitespace-nowrap cursor-pointer flex-shrink-0 ${pillarUploading[p.id] ? 'opacity-50 pointer-events-none' : ''}`}>
+                          <Upload size={13} /> {pillarUploading[p.id] ? 'Uploading…' : 'Upload'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => { e.target.files[0] && handlePillarPhotoUpload(p.id, e.target.files[0]); e.target.value = ''; }}
+                          />
+                        </label>
+                      </div>
+                      <p className="text-white/25 text-[10px] mt-1">Upload goes live immediately — no need to hit Save for the photo itself.</p>
+                    </div>
                     <div>
                       <label className={lCls}>Card Color Theme</label>
                       <select className={`${iCls} bg-[#0d1117] appearance-none capitalize`} value={p.colorScheme} onChange={e => updatePillar(p.id, 'colorScheme', e.target.value)}>
